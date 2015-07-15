@@ -1,5 +1,6 @@
 package org.entresoft.ckannouncement;
 
+import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
@@ -13,9 +14,12 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
+import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.BaseAdapter;
 import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 
@@ -42,6 +46,83 @@ import in.srain.cube.views.ptr.header.StoreHouseHeader;
 
 public class FragmentAnn extends Fragment {
 
+    public class Announcement {
+
+        private String content;
+        private String unit, date;
+        private Integer id;
+
+        public Announcement(String content, String unit, String date, Integer id) {
+            this.content = content;
+            this.unit = unit;
+            this.date = date;
+            this.id = id;
+        }
+
+        public String getContent() {
+            return content;
+        }
+
+        public String getUnit() {
+            return unit;
+        }
+
+        public String getDate() {
+            return date;
+        }
+
+        public Integer getId() {
+            return id;
+        }
+    }
+
+    public class AnnouncementAdapter extends ArrayAdapter<Announcement> {
+        private final Context context;
+        private final ArrayList<Announcement> data;
+        private final int layoutResourceId;
+
+        public AnnouncementAdapter(Context context, int layoutResourceId, ArrayList<Announcement> data) {
+            super(context, layoutResourceId, data);
+            this.context = context;
+            this.data = data;
+            this.layoutResourceId = layoutResourceId;
+        }
+
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            View row = convertView;
+            ViewHolder holder = null;
+
+            if (row == null) {
+                LayoutInflater inflater = ((Activity) context).getLayoutInflater();
+                row = inflater.inflate(layoutResourceId, parent, false);
+
+                holder = new ViewHolder();
+                holder.textView1 = (TextView) row.findViewById(R.id.list_ann_item_textview);
+                holder.textView2 = (TextView) row.findViewById(R.id.list_ann_item_date_textview);
+                holder.textView3 = (TextView) row.findViewById(R.id.list_ann_item_unit_textview);
+
+                row.setTag(holder);
+            } else {
+                holder = (ViewHolder) row.getTag();
+            }
+
+            Announcement announcement = data.get(position);
+
+            holder.textView1.setText(announcement.getContent());
+            holder.textView2.setText(announcement.getDate());
+            holder.textView3.setText(announcement.getUnit());
+
+            return row;
+        }
+
+        class ViewHolder {
+            TextView textView1;
+            TextView textView2;
+            TextView textView3;
+        }
+    }
+
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -63,11 +144,9 @@ public class FragmentAnn extends Fragment {
          */
         final RequestQueue queue = Volley.newRequestQueue(getActivity());
         final ListView mListView = (ListView) getActivity().findViewById(R.id.annListView);
-        final ArrayList<String> annList = new ArrayList<String>();
-        final ArrayList<Integer> annIdList = new ArrayList<Integer>();
-        final ArrayAdapter<String> listAdapter = new ArrayAdapter(getActivity(), android.R.layout.simple_list_item_1, annList);
-        // Refresh
-        mListView.setAdapter(listAdapter);
+        final ArrayList<Announcement> annList = new ArrayList<Announcement>();
+        final AnnouncementAdapter announcementAdapter = new AnnouncementAdapter(getActivity(), R.layout.list_ann_item, annList);
+        mListView.setAdapter(announcementAdapter);
 
         final ProgressDialog mDialog = new ProgressDialog(getActivity());
         mDialog.setIndeterminateDrawable(getActivity().getResources().getDrawable(R.drawable.suika_loading));
@@ -96,35 +175,36 @@ public class FragmentAnn extends Fragment {
                         try {
                             JSONArray jArray = response.getJSONArray("anns");
                             for (int i = 0; i < jArray.length(); i++) {
-                                annList.add(jArray.getJSONObject(i).getString("title"));
-                                annIdList.add(jArray.getJSONObject(i).getInt("id"));
+                                annList.add(new Announcement(jArray.getJSONObject(i).getString("title"),
+                                        jArray.getJSONObject(i).getString("author_group_name"),
+                                        jArray.getJSONObject(i).getString("created").substring(5, 10),
+                                        jArray.getJSONObject(i).getInt("id")));
                                 Log.d("TAG", "jizzzzzzzzzz" + i);
-                                mListView.setAdapter(listAdapter);
-                                // Pulling items from the array
+                                mListView.setAdapter(announcementAdapter);
                             }
 
                         } catch (JSONException e) {
                             mDialog.dismiss();
-                            annList.add("JSON ERROR");
-                            mListView.setAdapter(listAdapter);
+                            annList.add(new Announcement("Request ERROR", "", "", -1));
+                            mListView.setAdapter(announcementAdapter);
                         }
                     }
                 }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
                 mDialog.dismiss();
-                annList.add("Request ERROR");
-                mListView.setAdapter(listAdapter);
+                annList.add(new Announcement("Request ERROR", "", "", -1));
+                mListView.setAdapter(announcementAdapter);
             }
         });
         queue.add(jsonObjectRequest);
-
         mPtr.setPtrHandler(new PtrHandler() {
             @Override
             public void onRefreshBegin(PtrFrameLayout frame) {
                 frame.postDelayed(new Runnable() {
                     @Override
                     public void run() {
+
                         final JsonObjectRequest jsonObjectRequest = new JsonObjectRequest("http://twcl.ck.tp.edu.tw/api/announce", null,
                                 new Response.Listener<JSONObject>() {
                                     @Override
@@ -132,12 +212,13 @@ public class FragmentAnn extends Fragment {
                                         try {
                                             JSONArray jArray = response.getJSONArray("anns");
                                             annList.clear();
-                                            annIdList.clear();
                                             for (int i = 0; i < jArray.length(); i++) {
-                                                annList.add(jArray.getJSONObject(i).getString("title"));
-                                                annIdList.add(jArray.getJSONObject(i).getInt("id"));
+                                                annList.add(new Announcement(jArray.getJSONObject(i).getString("title"),
+                                                        jArray.getJSONObject(i).getString("author_group_name"),
+                                                        jArray.getJSONObject(i).getString("created").substring(5, 10),
+                                                        jArray.getJSONObject(i).getInt("id")));
                                             }
-                                            listAdapter.notifyDataSetChanged();
+                                            announcementAdapter.notifyDataSetChanged();
                                         } catch (JSONException e) {
                                             Toast.makeText(getActivity(), "Request ERROR", Toast.LENGTH_SHORT).show();
                                         }
@@ -159,18 +240,63 @@ public class FragmentAnn extends Fragment {
                 return PtrDefaultHandler.checkContentCanBePulledDown(frame, content, header);
             }
         });
-        mListView.setOnItemClickListener(new AdapterView.OnItemClickListener()
-
-                                         {
+        mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                                              @Override
                                              public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                                                 Intent intent = new Intent(getActivity(), AnnDetailActivity.class)
-                                                         .putExtra(Intent.EXTRA_TEXT, annIdList.get(position).toString());
-                                                 startActivity(intent);
+                                                 if (annList.get(position).getId() != -1) {
+                                                     Intent intent = new Intent(getActivity(), AnnDetailActivity.class)
+                                                             .putExtra(Intent.EXTRA_TEXT, annList.get(position).getId().toString());
+                                                     startActivity(intent);
+                                                 }
                                              }
                                          }
 
         );
+
+        mListView.setOnScrollListener(new AbsListView.OnScrollListener() {
+            boolean isLastRow = false;
+            Integer start = 12;
+            @Override
+            public void onScrollStateChanged(AbsListView absListView, int i) {
+                if (isLastRow && i == AbsListView.OnScrollListener.SCROLL_STATE_IDLE) {
+                    Log.d("Hello", start.toString());
+                    final JsonObjectRequest jsonObjectRequest = new JsonObjectRequest("http://twcl.ck.tp.edu.tw/api/announce?start=" + start.toString(), null,
+                            new Response.Listener<JSONObject>() {
+                                @Override
+                                public void onResponse(JSONObject response) {
+                                    try {
+                                        JSONArray jArray = response.getJSONArray("anns");
+                                        for (int i = 0; i < jArray.length(); i++) {
+                                            annList.add(new Announcement(jArray.getJSONObject(i).getString("title"),
+                                                    jArray.getJSONObject(i).getString("author_group_name"),
+                                                    jArray.getJSONObject(i).getString("created").substring(5, 10),
+                                                    jArray.getJSONObject(i).getInt("id")));
+                                        }
+                                        announcementAdapter.notifyDataSetChanged();
+                                    } catch (JSONException e) {
+                                        Toast.makeText(getActivity(), "Request ERROR", Toast.LENGTH_SHORT).show();
+                                    }
+                                }
+                            }, new Response.ErrorListener() {
+                        @Override
+                        public void onErrorResponse(VolleyError error) {
+                            Toast.makeText(getActivity(), "Request ERROR", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                    mPtr.refreshComplete();
+                    queue.add(jsonObjectRequest);
+                    start += 12;
+                }
+            }
+
+
+            @Override
+            public void onScroll(AbsListView absListView, int i, int i1, int i2) {
+                if (i + i1 == i2 && i2 > 0) {
+                    isLastRow = true;
+                }
+            }
+        });
     }
 
     public static int dp2px(Context context, float dpValue) {
