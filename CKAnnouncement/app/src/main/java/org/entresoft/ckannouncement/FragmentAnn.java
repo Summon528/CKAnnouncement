@@ -16,6 +16,8 @@ import android.view.animation.Animation;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.Toast;
+
 
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
@@ -32,6 +34,8 @@ import java.util.List;
 
 import in.srain.cube.views.ptr.PtrClassicFrameLayout;
 import in.srain.cube.views.ptr.PtrFrameLayout;
+import in.srain.cube.views.ptr.PtrHandler;
+import in.srain.cube.views.ptr.PtrDefaultHandler;
 import in.srain.cube.views.ptr.header.MaterialHeader;
 import in.srain.cube.views.ptr.header.MaterialProgressDrawable;
 import in.srain.cube.views.ptr.header.StoreHouseHeader;
@@ -57,15 +61,15 @@ public class FragmentAnn extends Fragment {
         /**
          * Making Request.
          */
-        RequestQueue queue = Volley.newRequestQueue(getActivity());
+        final RequestQueue queue = Volley.newRequestQueue(getActivity());
         final ListView mListView = (ListView) getActivity().findViewById(R.id.annListView);
         final ArrayList<String> annList = new ArrayList<String>();
-        final ArrayList<Integer> AnnIdList = new ArrayList<Integer>();
+        final ArrayList<Integer> annIdList = new ArrayList<Integer>();
         final ArrayAdapter<String> listAdapter = new ArrayAdapter(getActivity(), android.R.layout.simple_list_item_1, annList);
         // Refresh
         mListView.setAdapter(listAdapter);
 
-        final ProgressDialog mDialog = new ProgressDialog(getActivity()) ;
+        final ProgressDialog mDialog = new ProgressDialog(getActivity());
         mDialog.setIndeterminateDrawable(getActivity().getResources().getDrawable(R.drawable.suika_loading));
         mDialog.setMessage("少女祈禱中...");
         mDialog.show();
@@ -73,7 +77,7 @@ public class FragmentAnn extends Fragment {
         /**
          * Ptr Settings
          */
-        PtrFrameLayout mPtr = (PtrFrameLayout) getActivity().findViewById(R.id.mPtr);
+        final PtrFrameLayout mPtr = (PtrFrameLayout) getActivity().findViewById(R.id.mPtr);
         final MaterialHeader header = new MaterialHeader(getActivity());
         int[] colors = getResources().getIntArray(R.array.google_colors);
         header.setColorSchemeColors(colors);
@@ -84,7 +88,6 @@ public class FragmentAnn extends Fragment {
         mPtr.addPtrUIHandler(header);
 
 
-
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest("http://twcl.ck.tp.edu.tw/api/announce", null,
                 new Response.Listener<JSONObject>() {
                     @Override
@@ -92,16 +95,18 @@ public class FragmentAnn extends Fragment {
                         mDialog.dismiss();
                         try {
                             JSONArray jArray = response.getJSONArray("anns");
-                            for (int i = 0 ; i < jArray.length() ; i++) {
+                            for (int i = 0; i < jArray.length(); i++) {
                                 annList.add(jArray.getJSONObject(i).getString("title"));
-                                AnnIdList.add(jArray.getJSONObject(i).getInt("id"));
+                                annIdList.add(jArray.getJSONObject(i).getInt("id"));
                                 Log.d("TAG", "jizzzzzzzzzz" + i);
                                 mListView.setAdapter(listAdapter);
                                 // Pulling items from the array
                             }
 
                         } catch (JSONException e) {
-                            // Oops
+                            mDialog.dismiss();
+                            annList.add("JSON ERROR");
+                            mListView.setAdapter(listAdapter);
                         }
                     }
                 }, new Response.ErrorListener() {
@@ -109,24 +114,67 @@ public class FragmentAnn extends Fragment {
             public void onErrorResponse(VolleyError error) {
                 mDialog.dismiss();
                 annList.add("Request ERROR");
+                mListView.setAdapter(listAdapter);
             }
         });
-
-        // Add the request to the RequestQueue.
         queue.add(jsonObjectRequest);
 
-        mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        mPtr.setPtrHandler(new PtrHandler() {
             @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                Intent intent = new Intent(getActivity(), AnnDetailActivity.class)
-                        .putExtra(Intent.EXTRA_TEXT,  AnnIdList.get(position).toString());
-                startActivity(intent);
+            public void onRefreshBegin(PtrFrameLayout frame) {
+                frame.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        final JsonObjectRequest jsonObjectRequest = new JsonObjectRequest("http://twcl.ck.tp.edu.tw/api/announce", null,
+                                new Response.Listener<JSONObject>() {
+                                    @Override
+                                    public void onResponse(JSONObject response) {
+                                        try {
+                                            JSONArray jArray = response.getJSONArray("anns");
+                                            annList.clear();
+                                            annIdList.clear();
+                                            for (int i = 0; i < jArray.length(); i++) {
+                                                annList.add(jArray.getJSONObject(i).getString("title"));
+                                                annIdList.add(jArray.getJSONObject(i).getInt("id"));
+                                            }
+                                            listAdapter.notifyDataSetChanged();
+                                        } catch (JSONException e) {
+                                            Toast.makeText(getActivity(), "Request ERROR", Toast.LENGTH_SHORT).show();
+                                        }
+                                    }
+                                }, new Response.ErrorListener() {
+                            @Override
+                            public void onErrorResponse(VolleyError error) {
+                                Toast.makeText(getActivity(), "Request ERROR", Toast.LENGTH_SHORT).show();
+                            }
+                        });
+                        mPtr.refreshComplete();
+                        queue.add(jsonObjectRequest);
+                    }
+                }, 1800);
+            }
+
+            @Override
+            public boolean checkCanDoRefresh(PtrFrameLayout frame, View content, View header) {
+                return PtrDefaultHandler.checkContentCanBePulledDown(frame, content, header);
             }
         });
+        mListView.setOnItemClickListener(new AdapterView.OnItemClickListener()
+
+                                         {
+                                             @Override
+                                             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                                                 Intent intent = new Intent(getActivity(), AnnDetailActivity.class)
+                                                         .putExtra(Intent.EXTRA_TEXT, annIdList.get(position).toString());
+                                                 startActivity(intent);
+                                             }
+                                         }
+
+        );
     }
 
     public static int dp2px(Context context, float dpValue) {
-        final float scale =context.getResources().getDisplayMetrics().density;
+        final float scale = context.getResources().getDisplayMetrics().density;
         return (int) (dpValue * scale + 0.5f);
     }
 }
