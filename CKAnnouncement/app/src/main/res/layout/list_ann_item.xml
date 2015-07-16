@@ -9,6 +9,7 @@
         android:paddingBottom="8dp"
         android:paddingRight="8dp"
         android:orientation="vertical"
+        android:gravity="right"
         android:id="@+id/list_ann_item_linearlayout"
         android:layout_alignParentBottom="true"
         android:layout_alignParentRight="true">
@@ -24,9 +25,8 @@
             android:id="@+id/list_ann_item_unit_textview"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignParentBottom="true"
-            android:layout_alignParentRight="true"
-            android:text="教務處" />
+            android:text="教務處"
+            />
     </LinearLayout>
 
     <TextView

@@ -4,20 +4,17 @@ import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
+import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.animation.Animation;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.BaseAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -34,17 +31,31 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
-import java.util.List;
 
-import in.srain.cube.views.ptr.PtrClassicFrameLayout;
 import in.srain.cube.views.ptr.PtrFrameLayout;
 import in.srain.cube.views.ptr.PtrHandler;
 import in.srain.cube.views.ptr.PtrDefaultHandler;
 import in.srain.cube.views.ptr.header.MaterialHeader;
-import in.srain.cube.views.ptr.header.MaterialProgressDrawable;
-import in.srain.cube.views.ptr.header.StoreHouseHeader;
 
 public class FragmentAnn extends Fragment {
+
+    public class StartInt {
+        private Integer start;
+
+        public StartInt() {
+            start = 0;
+        }
+
+        public Void startReset() {
+            start = 0;
+            return null;
+        }
+
+        public Integer getStart() {
+            start += 12;
+            return start;
+        }
+    }
 
     public class Announcement {
 
@@ -126,7 +137,6 @@ public class FragmentAnn extends Fragment {
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-
         return initView(inflater, container);
     }
 
@@ -135,27 +145,24 @@ public class FragmentAnn extends Fragment {
         return view;
     }
 
+    ArrayList<Announcement> annList = new ArrayList<Announcement>();
+    AnnouncementAdapter announcementAdapter;
+    ProgressDialog mDialog;
+
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-
-        /**
-         * Making Request.
-         */
-        final RequestQueue queue = Volley.newRequestQueue(getActivity());
         final ListView mListView = (ListView) getActivity().findViewById(R.id.annListView);
-        final ArrayList<Announcement> annList = new ArrayList<Announcement>();
-        final AnnouncementAdapter announcementAdapter = new AnnouncementAdapter(getActivity(), R.layout.list_ann_item, annList);
+        announcementAdapter = new AnnouncementAdapter(getActivity(), R.layout.list_ann_item, annList);
+        mDialog = new ProgressDialog(getActivity());
         mListView.setAdapter(announcementAdapter);
+        final StartInt start = new StartInt();
+        ((ActionBarActivity) getActivity()).getSupportActionBar().setTitle(R.string.title_section2);
 
-        final ProgressDialog mDialog = new ProgressDialog(getActivity());
         mDialog.setIndeterminateDrawable(getActivity().getResources().getDrawable(R.drawable.suika_loading));
         mDialog.setMessage("少女祈禱中...");
         mDialog.show();
 
-        /**
-         * Ptr Settings
-         */
         final PtrFrameLayout mPtr = (PtrFrameLayout) getActivity().findViewById(R.id.mPtr);
         final MaterialHeader header = new MaterialHeader(getActivity());
         int[] colors = getResources().getIntArray(R.array.google_colors);
@@ -166,71 +173,18 @@ public class FragmentAnn extends Fragment {
         mPtr.setHeaderView(header);
         mPtr.addPtrUIHandler(header);
 
+        refreshAnn(0);
 
-        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest("http://twcl.ck.tp.edu.tw/api/announce", null,
-                new Response.Listener<JSONObject>() {
-                    @Override
-                    public void onResponse(JSONObject response) {
-                        mDialog.dismiss();
-                        try {
-                            JSONArray jArray = response.getJSONArray("anns");
-                            for (int i = 0; i < jArray.length(); i++) {
-                                annList.add(new Announcement(jArray.getJSONObject(i).getString("title"),
-                                        jArray.getJSONObject(i).getString("author_group_name"),
-                                        jArray.getJSONObject(i).getString("created").substring(5, 10),
-                                        jArray.getJSONObject(i).getInt("id")));
-                                Log.d("TAG", "jizzzzzzzzzz" + i);
-                                mListView.setAdapter(announcementAdapter);
-                            }
-
-                        } catch (JSONException e) {
-                            mDialog.dismiss();
-                            annList.add(new Announcement("Request ERROR", "", "", -1));
-                            mListView.setAdapter(announcementAdapter);
-                        }
-                    }
-                }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                mDialog.dismiss();
-                annList.add(new Announcement("Request ERROR", "", "", -1));
-                mListView.setAdapter(announcementAdapter);
-            }
-        });
-        queue.add(jsonObjectRequest);
         mPtr.setPtrHandler(new PtrHandler() {
             @Override
             public void onRefreshBegin(PtrFrameLayout frame) {
                 frame.postDelayed(new Runnable() {
                     @Override
                     public void run() {
-
-                        final JsonObjectRequest jsonObjectRequest = new JsonObjectRequest("http://twcl.ck.tp.edu.tw/api/announce", null,
-                                new Response.Listener<JSONObject>() {
-                                    @Override
-                                    public void onResponse(JSONObject response) {
-                                        try {
-                                            JSONArray jArray = response.getJSONArray("anns");
-                                            annList.clear();
-                                            for (int i = 0; i < jArray.length(); i++) {
-                                                annList.add(new Announcement(jArray.getJSONObject(i).getString("title"),
-                                                        jArray.getJSONObject(i).getString("author_group_name"),
-                                                        jArray.getJSONObject(i).getString("created").substring(5, 10),
-                                                        jArray.getJSONObject(i).getInt("id")));
-                                            }
-                                            announcementAdapter.notifyDataSetChanged();
-                                        } catch (JSONException e) {
-                                            Toast.makeText(getActivity(), "Request ERROR", Toast.LENGTH_SHORT).show();
-                                        }
-                                    }
-                                }, new Response.ErrorListener() {
-                            @Override
-                            public void onErrorResponse(VolleyError error) {
-                                Toast.makeText(getActivity(), "Request ERROR", Toast.LENGTH_SHORT).show();
-                            }
-                        });
+                        Log.d("Refresh", "2");
+                        refreshAnn(0);
+                        start.startReset();
                         mPtr.refreshComplete();
-                        queue.add(jsonObjectRequest);
                     }
                 }, 1800);
             }
@@ -253,39 +207,16 @@ public class FragmentAnn extends Fragment {
 
         );
 
+
         mListView.setOnScrollListener(new AbsListView.OnScrollListener() {
             boolean isLastRow = false;
-            Integer start = 12;
+
             @Override
             public void onScrollStateChanged(AbsListView absListView, int i) {
                 if (isLastRow && i == AbsListView.OnScrollListener.SCROLL_STATE_IDLE) {
-                    Log.d("Hello", start.toString());
-                    final JsonObjectRequest jsonObjectRequest = new JsonObjectRequest("http://twcl.ck.tp.edu.tw/api/announce?start=" + start.toString(), null,
-                            new Response.Listener<JSONObject>() {
-                                @Override
-                                public void onResponse(JSONObject response) {
-                                    try {
-                                        JSONArray jArray = response.getJSONArray("anns");
-                                        for (int i = 0; i < jArray.length(); i++) {
-                                            annList.add(new Announcement(jArray.getJSONObject(i).getString("title"),
-                                                    jArray.getJSONObject(i).getString("author_group_name"),
-                                                    jArray.getJSONObject(i).getString("created").substring(5, 10),
-                                                    jArray.getJSONObject(i).getInt("id")));
-                                        }
-                                        announcementAdapter.notifyDataSetChanged();
-                                    } catch (JSONException e) {
-                                        Toast.makeText(getActivity(), "Request ERROR", Toast.LENGTH_SHORT).show();
-                                    }
-                                }
-                            }, new Response.ErrorListener() {
-                        @Override
-                        public void onErrorResponse(VolleyError error) {
-                            Toast.makeText(getActivity(), "Request ERROR", Toast.LENGTH_SHORT).show();
-                        }
-                    });
+                    refreshAnn(start.getStart());
                     mPtr.refreshComplete();
-                    queue.add(jsonObjectRequest);
-                    start += 12;
+                    isLastRow = false;
                 }
             }
 
@@ -297,6 +228,39 @@ public class FragmentAnn extends Fragment {
                 }
             }
         });
+
+    }
+
+    public void refreshAnn(Integer start) {
+        Log.d("Refresh", "GO");
+        final RequestQueue queue = Volley.newRequestQueue(getActivity());
+        final JsonObjectRequest jsonObjectRequest = new JsonObjectRequest("http://twcl.ck.tp.edu.tw/api/announce?start=" + start.toString(), null,
+                new Response.Listener<JSONObject>() {
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        try {
+                            JSONArray jArray = response.getJSONArray("anns");
+                            for (int i = 0; i < jArray.length(); i++) {
+                                annList.add(new Announcement(jArray.getJSONObject(i).getString("title"),
+                                        jArray.getJSONObject(i).getString("author_group_name").replaceAll("\\s+", ""),
+                                        jArray.getJSONObject(i).getString("created").substring(5, 10),
+                                        jArray.getJSONObject(i).getInt("id")));
+                            }
+                            announcementAdapter.notifyDataSetChanged();
+                            mDialog.dismiss();
+                        } catch (JSONException e) {
+                            mDialog.dismiss();
+                            Toast.makeText(getActivity(), "Request ERROR", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                mDialog.dismiss();
+                Toast.makeText(getActivity(), "Request ERROR", Toast.LENGTH_SHORT).show();
+            }
+        });
+        queue.add(jsonObjectRequest);
     }
 
     public static int dp2px(Context context, float dpValue) {
