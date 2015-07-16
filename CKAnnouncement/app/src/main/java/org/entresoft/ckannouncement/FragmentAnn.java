@@ -155,7 +155,7 @@ public class FragmentAnn extends Fragment {
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
         final ListView mListView = (ListView) getActivity().findViewById(R.id.annListView);
-        final FloatingActionButton fab = (FloatingActionButton)getActivity().findViewById(R.id.fab);
+        final FloatingActionButton fab = (FloatingActionButton) getActivity().findViewById(R.id.fab);
         announcementAdapter = new AnnouncementAdapter(getActivity(), R.layout.list_ann_item, annList);
         mDialog = new ProgressDialog(getActivity());
         mListView.setAdapter(announcementAdapter);
@@ -169,54 +169,44 @@ public class FragmentAnn extends Fragment {
         final PtrFrameLayout mPtr = (PtrFrameLayout) getActivity().findViewById(R.id.mPtr);
         final MaterialHeader header = new MaterialHeader(getActivity());
         int[] colors = getResources().getIntArray(R.array.google_colors);
-            header.setColorSchemeColors(colors);
-            header.setLayoutParams(new PtrFrameLayout.LayoutParams(-1, -2));
-            header.setPadding(0,
-
-                    dp2px(getActivity(),
-
-                            15), 0, dp2px(getActivity(), 10));
-            header.setPtrFrameLayout(mPtr);
-            mPtr.setHeaderView(header);
-            mPtr.addPtrUIHandler(header);
+        header.setColorSchemeColors(colors);
+        header.setLayoutParams(new PtrFrameLayout.LayoutParams(-1, -2));
+        header.setPadding(0, dp2px(getActivity(), 15), 0, dp2px(getActivity(), 10));
+        header.setPtrFrameLayout(mPtr);
+        mPtr.setHeaderView(header);
+        mPtr.addPtrUIHandler(header);
 
         refreshAnn(0);
 
-            mPtr.setPtrHandler(new
+        mPtr.setPtrHandler(new PtrHandler() {
+            @Override
+            public void onRefreshBegin(PtrFrameLayout frame) {
+                frame.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        Log.d("Refresh", "2");
+                        refreshAnn(0);
+                        start.startReset();
+                        mPtr.refreshComplete();
+                    }
+                }, 1800);
+            }
 
-                                       PtrHandler() {
-                                           @Override
-                                           public void onRefreshBegin(PtrFrameLayout frame) {
-                                               frame.postDelayed(new Runnable() {
-                                                   @Override
-                                                   public void run() {
-                                                       Log.d("Refresh", "2");
-                                                       refreshAnn(0);
-                                                       start.startReset();
-                                                       mPtr.refreshComplete();
-                                                   }
-                                               }, 1800);
-                                           }
-
-                                           @Override
-                                           public boolean checkCanDoRefresh(PtrFrameLayout frame, View content, View header) {
-                                               return PtrDefaultHandler.checkContentCanBePulledDown(frame, content, header);
-                                           }
-                                       });
-        mListView.setOnItemClickListener(new AdapterView.OnItemClickListener()
-
-                                         {
-                                             @Override
-                                             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                                                 if (annList.get(position).getId() != -1) {
-                                                     Intent intent = new Intent(getActivity(), AnnDetailActivity.class)
-                                                             .putExtra(Intent.EXTRA_TEXT, annList.get(position).getId().toString());
-                                                     startActivity(intent);
-                                                 }
-                                             }
-                                         }
-
-        );
+            @Override
+            public boolean checkCanDoRefresh(PtrFrameLayout frame, View content, View header) {
+                return PtrDefaultHandler.checkContentCanBePulledDown(frame, content, header);
+            }
+        });
+        mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                if (annList.get(position).getId() != -1) {
+                    Intent intent = new Intent(getActivity(), AnnDetailActivity.class)
+                            .putExtra(Intent.EXTRA_TEXT, annList.get(position).getId().toString());
+                    startActivity(intent);
+                }
+            }
+        });
 
         fab.attachToListView(mListView, new ScrollDirectionListener() {
             @Override
