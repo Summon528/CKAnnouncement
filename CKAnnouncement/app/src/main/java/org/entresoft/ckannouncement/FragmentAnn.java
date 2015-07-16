@@ -176,7 +176,7 @@ public class FragmentAnn extends Fragment {
         mPtr.setHeaderView(header);
         mPtr.addPtrUIHandler(header);
 
-        refreshAnn(0);
+        refreshAnn(0,true);
 
         mPtr.setPtrHandler(new PtrHandler() {
             @Override
@@ -184,8 +184,7 @@ public class FragmentAnn extends Fragment {
                 frame.postDelayed(new Runnable() {
                     @Override
                     public void run() {
-                        Log.d("Refresh", "2");
-                        refreshAnn(0);
+                        refreshAnn(0,true);
                         start.startReset();
                         mPtr.refreshComplete();
                     }
@@ -224,7 +223,7 @@ public class FragmentAnn extends Fragment {
             @Override
             public void onScrollStateChanged(AbsListView view, int scrollState) {
                 if (isLastRow && scrollState == AbsListView.OnScrollListener.SCROLL_STATE_IDLE) {
-                    refreshAnn(start.getStart());
+                    refreshAnn(start.getStart(),false);
                     mPtr.refreshComplete();
                     isLastRow = false;
                 }
@@ -246,7 +245,7 @@ public class FragmentAnn extends Fragment {
         });
     }
 
-    public void refreshAnn(Integer start) {
+    public void refreshAnn(Integer start, final boolean refresh) {
         Log.d("Refresh", "GO");
         final RequestQueue queue = Volley.newRequestQueue(getActivity());
         final JsonObjectRequest jsonObjectRequest = new JsonObjectRequest("http://twcl.ck.tp.edu.tw/api/announce?start=" + start.toString(), null,
@@ -255,6 +254,7 @@ public class FragmentAnn extends Fragment {
                     public void onResponse(JSONObject response) {
                         try {
                             JSONArray jArray = response.getJSONArray("anns");
+                            if (refresh) annList.clear();
                             for (int i = 0; i < jArray.length(); i++) {
                                 annList.add(new Announcement(jArray.getJSONObject(i).getString("title"),
                                         jArray.getJSONObject(i).getString("author_group_name").replaceAll("\\s+", ""),

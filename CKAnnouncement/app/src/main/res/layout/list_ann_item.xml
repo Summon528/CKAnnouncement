@@ -18,14 +18,12 @@
             android:id="@+id/list_ann_item_date_textview"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:paddingBottom="2dp"
-            android:text="7/12" />
+            android:paddingBottom="2dp"/>
 
         <TextView
             android:id="@+id/list_ann_item_unit_textview"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="教務處"
             />
     </LinearLayout>
 
