@@ -25,6 +25,8 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
+import com.melnykov.fab.FloatingActionButton;
+import com.melnykov.fab.ScrollDirectionListener;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -153,6 +155,7 @@ public class FragmentAnn extends Fragment {
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
         final ListView mListView = (ListView) getActivity().findViewById(R.id.annListView);
+        final FloatingActionButton fab = (FloatingActionButton)getActivity().findViewById(R.id.fab);
         announcementAdapter = new AnnouncementAdapter(getActivity(), R.layout.list_ann_item, annList);
         mDialog = new ProgressDialog(getActivity());
         mListView.setAdapter(announcementAdapter);
@@ -166,35 +169,43 @@ public class FragmentAnn extends Fragment {
         final PtrFrameLayout mPtr = (PtrFrameLayout) getActivity().findViewById(R.id.mPtr);
         final MaterialHeader header = new MaterialHeader(getActivity());
         int[] colors = getResources().getIntArray(R.array.google_colors);
-        header.setColorSchemeColors(colors);
-        header.setLayoutParams(new PtrFrameLayout.LayoutParams(-1, -2));
-        header.setPadding(0, dp2px(getActivity(), 15), 0, dp2px(getActivity(), 10));
-        header.setPtrFrameLayout(mPtr);
-        mPtr.setHeaderView(header);
-        mPtr.addPtrUIHandler(header);
+            header.setColorSchemeColors(colors);
+            header.setLayoutParams(new PtrFrameLayout.LayoutParams(-1, -2));
+            header.setPadding(0,
+
+                    dp2px(getActivity(),
+
+                            15), 0, dp2px(getActivity(), 10));
+            header.setPtrFrameLayout(mPtr);
+            mPtr.setHeaderView(header);
+            mPtr.addPtrUIHandler(header);
 
         refreshAnn(0);
 
-        mPtr.setPtrHandler(new PtrHandler() {
-            @Override
-            public void onRefreshBegin(PtrFrameLayout frame) {
-                frame.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        Log.d("Refresh", "2");
-                        refreshAnn(0);
-                        start.startReset();
-                        mPtr.refreshComplete();
-                    }
-                }, 1800);
-            }
+            mPtr.setPtrHandler(new
 
-            @Override
-            public boolean checkCanDoRefresh(PtrFrameLayout frame, View content, View header) {
-                return PtrDefaultHandler.checkContentCanBePulledDown(frame, content, header);
-            }
-        });
-        mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                                       PtrHandler() {
+                                           @Override
+                                           public void onRefreshBegin(PtrFrameLayout frame) {
+                                               frame.postDelayed(new Runnable() {
+                                                   @Override
+                                                   public void run() {
+                                                       Log.d("Refresh", "2");
+                                                       refreshAnn(0);
+                                                       start.startReset();
+                                                       mPtr.refreshComplete();
+                                                   }
+                                               }, 1800);
+                                           }
+
+                                           @Override
+                                           public boolean checkCanDoRefresh(PtrFrameLayout frame, View content, View header) {
+                                               return PtrDefaultHandler.checkContentCanBePulledDown(frame, content, header);
+                                           }
+                                       });
+        mListView.setOnItemClickListener(new AdapterView.OnItemClickListener()
+
+                                         {
                                              @Override
                                              public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                                                  if (annList.get(position).getId() != -1) {
@@ -207,28 +218,42 @@ public class FragmentAnn extends Fragment {
 
         );
 
+        fab.attachToListView(mListView, new ScrollDirectionListener() {
+            @Override
+            public void onScrollDown() {
+                fab.show();
+            }
 
-        mListView.setOnScrollListener(new AbsListView.OnScrollListener() {
+            @Override
+            public void onScrollUp() {
+                fab.hide();
+            }
+        }, new AbsListView.OnScrollListener() {
             boolean isLastRow = false;
 
             @Override
-            public void onScrollStateChanged(AbsListView absListView, int i) {
-                if (isLastRow && i == AbsListView.OnScrollListener.SCROLL_STATE_IDLE) {
+            public void onScrollStateChanged(AbsListView view, int scrollState) {
+                if (isLastRow && scrollState == AbsListView.OnScrollListener.SCROLL_STATE_IDLE) {
                     refreshAnn(start.getStart());
                     mPtr.refreshComplete();
                     isLastRow = false;
                 }
             }
 
-
             @Override
-            public void onScroll(AbsListView absListView, int i, int i1, int i2) {
-                if (i + i1 == i2 && i2 > 0) {
+            public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
+                if (firstVisibleItem + visibleItemCount == totalItemCount && totalItemCount > 0) {
                     isLastRow = true;
                 }
             }
         });
 
+        getActivity().findViewById(R.id.fab).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Toast.makeText(getActivity(), "Floating Action Button", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     public void refreshAnn(Integer start) {
