@@ -36,5 +36,5 @@
         android:layout_margin="16dp"
         fab:fab_colorNormal="@color/colorPrimary"
         fab:fab_colorPressed="@color/colorPrimaryDark"
-        fab:fab_colorRipple="@color/colorPrimary" />
+        fab:fab_colorRipple="@color/colorPrimaryDark" />
 </RelativeLayout>

@@ -49,4 +49,56 @@
         <item>@color/yellow</item>
         <item>@color/green</item>
     </integer-array>
+
+    <string-array name="group_array">
+        <item>不限群組</item>
+        <item>人事室</item>
+        <item>圖書館</item>
+        <item>學務處</item>
+        <item>教務處</item>
+        <item>教官室</item>
+        <item>教師會</item>
+        <item>班聯會</item>
+        <item>網管中心</item>
+        <item>總務處</item>
+        <item>輔導室</item>
+        <item>重要訊息</item>
+    </string-array>
+
+
+    <string-array name="unit_array">
+        <item>不限單位</item>
+        <item>事務組</item>
+        <item>人事室主任</item>
+        <item>出納組</item>
+        <item>圖書館主任</item>
+        <item>學生活動組</item>
+        <item>實驗研究組</item>
+        <item>教學組</item>
+        <item>教官室</item>
+        <item>教師會</item>
+        <item>文書組</item>
+        <item>特教組</item>
+        <item>班聯會</item>
+        <item>秘書</item>
+        <item>系統師1</item>
+        <item>系統師2</item>
+        <item>衛生組</item>
+        <item>設備組</item>
+        <item>註冊組</item>
+        <item>課外活動組</item>
+        <item>護理師</item>
+        <item>資訊組長</item>
+        <item>輔導主任</item>
+        <item>體育組</item>
+    </string-array>
+
+    <string-array name="time_array">
+        <item>不限時間</item>
+        <item>1小時內</item>
+        <item>24小時內</item>
+        <item>一週內</item>
+        <item>一個月內</item>
+        <item>一年內</item>
+    </string-array>
 </resources>
