@@ -310,6 +310,9 @@ public class FragmentAnn extends Fragment {
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
         mListView = (ListView) getActivity().findViewById(R.id.annListView);
+        View v = getActivity().findViewById(R.id.loading_footer);
+        View loadingFooter = getActivity().getLayoutInflater().inflate(R.layout.loading_footer, null);
+        mListView.addFooterView(loadingFooter);
         announcementAdapter = new AnnouncementAdapter(getActivity(), R.layout.list_ann_item, annList);
         mListView.setAdapter(announcementAdapter);
         final FloatingActionButton fab = (FloatingActionButton) getActivity().findViewById(R.id.fab);
@@ -394,7 +397,7 @@ public class FragmentAnn extends Fragment {
 
             @Override
             public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
-                if (firstVisibleItem + visibleItemCount == totalItemCount && totalItemCount > 0) {
+                if (firstVisibleItem + visibleItemCount == totalItemCount - 3 && totalItemCount > 0) {
                     isLastRow = true;
                 }
             }
@@ -469,7 +472,7 @@ public class FragmentAnn extends Fragment {
 
 
     public void refreshAnn(SearchInfo info, final boolean refresh) {
-        if (annList.size() == 0 || annList.get(annList.size() - 1).getId() != -1) {
+        if (annList.size() <=1 || info.start==0 || annList.get(annList.size() - 1).getId() != -1) {
             String uri = "http://twcl.ck.tp.edu.tw/api/announce?" + info.getInfo();
             Log.d("Refresh", uri);
             final RequestQueue queue = Volley.newRequestQueue(getActivity());
@@ -506,6 +509,7 @@ public class FragmentAnn extends Fragment {
             });
             queue.add(jsonObjectRequest);
         }
+        else mDialog.dismiss();
     }
 
     public static int dp2px(Context context, float dpValue) {

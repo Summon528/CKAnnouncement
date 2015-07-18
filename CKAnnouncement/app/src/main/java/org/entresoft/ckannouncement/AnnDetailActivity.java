@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.TextView;
 
 import com.android.volley.RequestQueue;
@@ -27,6 +28,8 @@ public class AnnDetailActivity extends ActionBarActivity {
         setContentView(R.layout.activity_ann_detail);
         RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
         final TextView annDetailView = (TextView) findViewById(R.id.annDetailView);
+        final TextView annDetailTitleView = (TextView) findViewById(R.id.annDetailTitleView);
+        final TextView annDetailLoading = (TextView) findViewById(R.id.annDetailLoading);
         Intent intent = getIntent();
         String url = "http://twcl.ck.tp.edu.tw/api/announce/" + intent.getStringExtra(Intent.EXTRA_TEXT);
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(url, null,
@@ -34,8 +37,12 @@ public class AnnDetailActivity extends ActionBarActivity {
                     @Override
                     public void onResponse(JSONObject response) {
                         try {
+                            annDetailLoading.setVisibility(View.GONE);
                             String annContent = response.getString("content");
+                            annContent = annContent.substring(0,annContent.lastIndexOf("***"));
+                            String annTitle = response.getString("title");
                             annDetailView.setText(annContent);
+                            annDetailTitleView.setText(annTitle);
                         } catch (JSONException e) {
                             Log.e(LOG_TAG, e.toString());
                         }

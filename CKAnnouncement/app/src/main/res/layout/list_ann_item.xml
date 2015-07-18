@@ -10,7 +10,8 @@
         android:layout_marginLeft="6dp"
         android:layout_marginRight="6dp"
         android:layout_marginTop="4dp"
-        android:background="@drawable/card">
+        android:background="@drawable/card"
+        >
 
         <LinearLayout
             android:id="@+id/list_ann_item_linearlayout"

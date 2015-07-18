@@ -26,5 +26,4 @@ dependencies {
     compile 'in.srain.cube:ultra-ptr:1.0.10'
     compile 'com.melnykov:floatingactionbutton:1.3.0'
     compile 'com.afollestad:material-dialogs:0.7.6.0'
-
 }
