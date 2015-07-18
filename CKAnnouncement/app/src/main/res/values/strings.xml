@@ -20,6 +20,9 @@
     <string name="post_time">發表時間</string>
     <string name="search_hint">關鍵字</string>
 
+    <string name="requestError">網路錯誤\n伺服器繁忙或網路不穩定</string>
+    <string name="nothing">---沒有東西惹---</string>
+
     <string name="search">搜尋</string>
     <string name="action_openInBrowser">在瀏覽器開啟</string>
     <string name="action_settings">Settings</string>

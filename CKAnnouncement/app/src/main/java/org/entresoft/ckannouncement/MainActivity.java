@@ -5,6 +5,7 @@ import android.support.v7.app.ActionBarActivity;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.support.v4.widget.DrawerLayout;
@@ -18,7 +19,7 @@ public class MainActivity extends ActionBarActivity
      */
     private NavigationDrawerFragment mNavigationDrawerFragment;
 
-    boolean doubleBackToExitPressedOnce =false;
+    boolean doubleBackToExitPressedOnce = false;
 
     @Override
     public void onBackPressed() {
@@ -34,7 +35,7 @@ public class MainActivity extends ActionBarActivity
 
             @Override
             public void run() {
-                doubleBackToExitPressedOnce=false;
+                doubleBackToExitPressedOnce = false;
             }
         }, 2000);
     }
@@ -43,38 +44,39 @@ public class MainActivity extends ActionBarActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
         mNavigationDrawerFragment = (NavigationDrawerFragment)
                 getSupportFragmentManager().findFragmentById(R.id.navigation_drawer);
-
         // Set up the drawer.
         mNavigationDrawerFragment.setUp(
                 R.id.navigation_drawer,
                 (DrawerLayout) findViewById(R.id.drawer_layout));
     }
 
+
     @Override
     public void onNavigationDrawerItemSelected(int position) {
-
+        FragmentManager fragmentManager = getSupportFragmentManager();
         Fragment objFragment = null;
-
         switch (position) {
             case 0:
-                objFragment = new FragmentMain();
+                objFragment = fragmentManager.findFragmentByTag("FragmentMain");
+                if (objFragment == null)
+                    objFragment = new FragmentMain();
+                fragmentManager.beginTransaction().replace(R.id.container, objFragment,"FragmentMain").commit();
                 break;
             case 1:
-                objFragment = new FragmentAnn();
+                objFragment = fragmentManager.findFragmentByTag("FragmentAnn");
+                if (objFragment == null)
+                    objFragment = new FragmentAnn();
+                fragmentManager.beginTransaction().replace(R.id.container, objFragment, "FragmentAnn").commit();
                 break;
             case 2:
-                objFragment = new FragmentLogin();
+                objFragment = fragmentManager.findFragmentByTag("FragmentLogin");
+                if (objFragment == null)
+                    objFragment = new FragmentLogin();
+                fragmentManager.beginTransaction().replace(R.id.container, objFragment, "FragmentLogin").commit();
                 break;
         }
-
-        // update the main content by replacing fragments
-        FragmentManager fragmentManager = getSupportFragmentManager();
-        fragmentManager.beginTransaction()
-                .replace(R.id.container, objFragment)
-                .commit();
     }
 
     @Override

@@ -6,6 +6,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.ActionBarActivity;
@@ -54,10 +56,42 @@ import in.srain.cube.views.ptr.header.MaterialHeader;
 
 public class FragmentAnn extends Fragment {
 
-    public class SearchInfo {
-        private Integer start;
+    public class SearchInfo implements Parcelable {
+        private Integer start, isSearchng;
         private String unit, group, time, search;
-        boolean isSearchng;
+
+        public int describeContents() {
+            return 0;
+        }
+
+        public void writeToParcel(Parcel out, int flags) {
+            out.writeInt(start);
+            out.writeString(unit);
+            out.writeString(group);
+            out.writeString(time);
+            out.writeString(search);
+            out.writeInt(isSearchng);
+        }
+
+        public final Parcelable.Creator<SearchInfo> CREATOR
+                = new Parcelable.Creator<SearchInfo>() {
+            public SearchInfo createFromParcel(Parcel in) {
+                return new SearchInfo(in);
+            }
+
+            public SearchInfo[] newArray(int size) {
+                return new SearchInfo[size];
+            }
+        };
+
+        private SearchInfo(Parcel in) {
+            start = in.readInt();
+            unit = in.readString();
+            group = in.readString();
+            time = in.readString();
+            search = in.readString();
+            isSearchng = in.readInt();
+        }
 
         public SearchInfo() {
             start = 0;
@@ -65,7 +99,7 @@ public class FragmentAnn extends Fragment {
             time = "";
             unit = "";
             group = "";
-            isSearchng = false;
+            isSearchng = 0;
         }
 
         public Void reset() {
@@ -83,7 +117,7 @@ public class FragmentAnn extends Fragment {
         }
 
         public Void searchReset() {
-            isSearchng = false;
+            isSearchng = 0;
             return null;
         }
 
@@ -93,12 +127,12 @@ public class FragmentAnn extends Fragment {
             this.unit = unit;
             this.search = search;
             this.group = group;
-            isSearchng = true;
+            isSearchng = 1;
             return null;
         }
 
         public boolean getIsSearching() {
-            return isSearchng;
+            return isSearchng == 1;
         }
 
         public Void getMore() {
@@ -116,7 +150,7 @@ public class FragmentAnn extends Fragment {
         }
     }
 
-    public class Announcement {
+    public class Announcement implements Parcelable {
 
         private String content;
         private String unit, date;
@@ -144,6 +178,36 @@ public class FragmentAnn extends Fragment {
         public Integer getId() {
             return id;
         }
+
+        private Announcement(Parcel in) {
+            content = in.readString();
+            unit = in.readString();
+            date = in.readString();
+            id = in.readInt();
+        }
+
+        public int describeContents() {
+            return 0;
+        }
+
+        @Override
+        public void writeToParcel(Parcel out, int flags) {
+            out.writeString(content);
+            out.writeString(unit);
+            out.writeString(date);
+            out.writeInt(id);
+        }
+
+        public final Parcelable.Creator<Announcement> CREATOR = new Parcelable.Creator<Announcement>() {
+            public Announcement createFromParcel(Parcel in) {
+                return new Announcement(in);
+            }
+
+            public Announcement[] newArray(int size) {
+                return new Announcement[size];
+            }
+        };
+
     }
 
     public class AnnouncementAdapter extends ArrayAdapter<Announcement> {
@@ -193,6 +257,18 @@ public class FragmentAnn extends Fragment {
         }
     }
 
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        outState.putParcelableArrayList("annList", annList);
+        outState.putParcelable("info", info);
+        int index = mListView.getFirstVisiblePosition();
+        View v = mListView.getChildAt(0);
+        int top = (v == null) ? 0 : (v.getTop() - mListView.getPaddingTop());
+        outState.putInt("index", index);
+        outState.putInt("top", top);
+        super.onSaveInstanceState(outState);
+    }
+
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -227,23 +303,21 @@ public class FragmentAnn extends Fragment {
     ArrayList<Announcement> annList = new ArrayList<Announcement>();
     AnnouncementAdapter announcementAdapter;
     ProgressDialog mDialog;
+    SearchInfo info;
+    ListView mListView;
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        final ListView mListView = (ListView) getActivity().findViewById(R.id.annListView);
-        final FloatingActionButton fab = (FloatingActionButton) getActivity().findViewById(R.id.fab);
-
+        mListView = (ListView) getActivity().findViewById(R.id.annListView);
         announcementAdapter = new AnnouncementAdapter(getActivity(), R.layout.list_ann_item, annList);
-        mDialog = new ProgressDialog(getActivity());
         mListView.setAdapter(announcementAdapter);
-        final SearchInfo info = new SearchInfo();
-        ((ActionBarActivity) getActivity()).getSupportActionBar().setTitle(R.string.title_section2);
-
+        final FloatingActionButton fab = (FloatingActionButton) getActivity().findViewById(R.id.fab);
+        info = new SearchInfo();
+        mDialog = new ProgressDialog(getActivity());
         mDialog.setIndeterminateDrawable(getActivity().getResources().getDrawable(R.drawable.suika_loading));
         mDialog.setMessage("少女祈禱中...");
-        mDialog.show();
-
+        ((ActionBarActivity) getActivity()).getSupportActionBar().setTitle(R.string.title_section2);
         final PtrFrameLayout mPtr = (PtrFrameLayout) getActivity().findViewById(R.id.mPtr);
         final MaterialHeader header = new MaterialHeader(getActivity());
         int[] colors = getResources().getIntArray(R.array.google_colors);
@@ -254,7 +328,18 @@ public class FragmentAnn extends Fragment {
         mPtr.setHeaderView(header);
         mPtr.addPtrUIHandler(header);
 
-        refreshAnn(info, true);
+
+        if (savedInstanceState == null) {
+            mDialog.show();
+            refreshAnn(info, true);
+        } else {
+            annList = savedInstanceState.getParcelableArrayList("annList");
+            announcementAdapter.clear();
+            announcementAdapter.addAll(annList);
+            announcementAdapter = new AnnouncementAdapter(getActivity(), R.layout.list_ann_item, annList);
+            info = savedInstanceState.getParcelable("info");
+            mListView.setAdapter(announcementAdapter);
+        }
 
         mPtr.setPtrHandler(new PtrHandler() {
             @Override
@@ -321,11 +406,13 @@ public class FragmentAnn extends Fragment {
                 if (info.getIsSearching()) {
                     info.reset();
                     info.searchReset();
+                    mDialog.show();
                     refreshAnn(info, true);
                     fab.setColorNormalResId(R.color.colorPrimary);
                     fab.setColorPressedResId(R.color.colorPrimaryDark);
                     fab.setColorRippleResId(R.color.colorPrimaryDark);
                     fab.setImageResource(R.drawable.ic_action_search);
+                    mListView.setSelectionAfterHeaderView();
                 } else {
                     MaterialDialog.Builder md = new MaterialDialog.Builder(getActivity());
                     LayoutInflater factory = LayoutInflater.from(getActivity());
@@ -363,11 +450,13 @@ public class FragmentAnn extends Fragment {
                                     timeSpinnerText = time[timeSpinner.getSelectedItemPosition()];
                                     if (!(s.isEmpty() && groupSpinnerText.isEmpty() && unitSpinnerText.isEmpty() && timeSpinnerText.isEmpty())) {
                                         info.updateSearch(s, unitSpinnerText, groupSpinnerText, timeSpinnerText);
+                                        mDialog.show();
                                         refreshAnn(info, true);
                                         fab.setColorNormalResId(android.R.color.holo_red_light);
                                         fab.setColorPressedResId(android.R.color.holo_red_dark);
                                         fab.setColorRippleResId(android.R.color.holo_red_dark);
                                         fab.setImageResource(R.drawable.ic_clear);
+                                        mListView.setSelectionAfterHeaderView();
                                     }
                                 }
                             })
@@ -380,38 +469,43 @@ public class FragmentAnn extends Fragment {
 
 
     public void refreshAnn(SearchInfo info, final boolean refresh) {
-        String uri = "http://twcl.ck.tp.edu.tw/api/announce?" + info.getInfo();
-        Log.d("Refresh", uri);
-        final RequestQueue queue = Volley.newRequestQueue(getActivity());
-        final JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(uri, null,
-                new Response.Listener<JSONObject>() {
-                    @Override
-                    public void onResponse(JSONObject response) {
-                        try {
-                            JSONArray jArray = response.getJSONArray("anns");
-                            if (refresh) annList.clear();
-                            Log.d("Refresh", String.valueOf(jArray.length()));
-                            for (int i = 0; i < jArray.length(); i++) {
-                                annList.add(new Announcement(jArray.getJSONObject(i).getString("title"),
-                                        jArray.getJSONObject(i).getString("author_group_name").replaceAll("\\s+", ""),
-                                        jArray.getJSONObject(i).getString("created").substring(5, 10),
-                                        jArray.getJSONObject(i).getInt("id")));
+        if (annList.size() == 0 || annList.get(annList.size() - 1).getId() != -1) {
+            String uri = "http://twcl.ck.tp.edu.tw/api/announce?" + info.getInfo();
+            Log.d("Refresh", uri);
+            final RequestQueue queue = Volley.newRequestQueue(getActivity());
+            final JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(uri, null,
+                    new Response.Listener<JSONObject>() {
+                        @Override
+                        public void onResponse(JSONObject response) {
+                            try {
+                                JSONArray jArray = response.getJSONArray("anns");
+                                if (refresh) annList.clear();
+                                Log.d("Refresh", String.valueOf(jArray.length()));
+                                for (int i = 0; i < jArray.length(); i++) {
+                                    annList.add(new Announcement(jArray.getJSONObject(i).getString("title"),
+                                            jArray.getJSONObject(i).getString("author_group_name").replaceAll("\\s+", ""),
+                                            jArray.getJSONObject(i).getString("created").substring(5, 10),
+                                            jArray.getJSONObject(i).getInt("id")));
+                                }
+                                if (jArray.length() < 12) {
+                                    annList.add(new Announcement(getResources().getString(R.string.nothing), "", "", -1));
+                                }
+                                announcementAdapter.notifyDataSetChanged();
+                                mDialog.dismiss();
+                            } catch (JSONException e) {
+                                mDialog.dismiss();
+                                Toast.makeText(getActivity(), R.string.requestError, Toast.LENGTH_SHORT).show();
                             }
-                            announcementAdapter.notifyDataSetChanged();
-                            mDialog.dismiss();
-                        } catch (JSONException e) {
-                            mDialog.dismiss();
-                            Toast.makeText(getActivity(), "Request ERROR", Toast.LENGTH_SHORT).show();
                         }
-                    }
-                }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                mDialog.dismiss();
-                Toast.makeText(getActivity(), "Request ERROR", Toast.LENGTH_SHORT).show();
-            }
-        });
-        queue.add(jsonObjectRequest);
+                    }, new Response.ErrorListener() {
+                @Override
+                public void onErrorResponse(VolleyError error) {
+                    mDialog.dismiss();
+                    Toast.makeText(getActivity(), R.string.requestError, Toast.LENGTH_SHORT).show();
+                }
+            });
+            queue.add(jsonObjectRequest);
+        }
     }
 
     public static int dp2px(Context context, float dpValue) {
