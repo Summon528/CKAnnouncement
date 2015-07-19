@@ -18,14 +18,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity
-            android:name=".AnnDetailActivity"
-            android:label="@string/title_activity_ann_detail"
-            android:parentActivityName=".MainActivity" >
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value="org.entresoft.ckannouncement.MainActivity" />
-        </activity>
     </application>
 
 </manifest>

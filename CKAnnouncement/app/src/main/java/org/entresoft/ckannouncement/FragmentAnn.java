@@ -10,6 +10,7 @@ import android.os.Parcel;
 import android.os.Parcelable;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v4.view.ViewPager;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -21,8 +22,6 @@ import android.view.ViewGroup;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
-import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.Spinner;
@@ -42,9 +41,7 @@ import com.melnykov.fab.ScrollDirectionListener;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.w3c.dom.Text;
 
-import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 
@@ -269,6 +266,11 @@ public class FragmentAnn extends Fragment {
         super.onSaveInstanceState(outState);
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+    }
+
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -305,13 +307,13 @@ public class FragmentAnn extends Fragment {
     ProgressDialog mDialog;
     SearchInfo info;
     ListView mListView;
+    View loadingFooter;
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
         mListView = (ListView) getActivity().findViewById(R.id.annListView);
-        View v = getActivity().findViewById(R.id.loading_footer);
-        View loadingFooter = getActivity().getLayoutInflater().inflate(R.layout.loading_footer, null);
+        loadingFooter = getActivity().getLayoutInflater().inflate(R.layout.loading_footer, null);
         mListView.addFooterView(loadingFooter);
         announcementAdapter = new AnnouncementAdapter(getActivity(), R.layout.list_ann_item, annList);
         mListView.setAdapter(announcementAdapter);
@@ -344,6 +346,9 @@ public class FragmentAnn extends Fragment {
             mListView.setAdapter(announcementAdapter);
         }
 
+        final ViewPager mViewPager = (ViewPager) getActivity().findViewById(R.id.vpPager);
+
+
         mPtr.setPtrHandler(new PtrHandler() {
             @Override
             public void onRefreshBegin(PtrFrameLayout frame) {
@@ -366,12 +371,15 @@ public class FragmentAnn extends Fragment {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 if (annList.get(position).getId() != -1) {
-                    Intent intent = new Intent(getActivity(), AnnDetailActivity.class)
-                            .putExtra(Intent.EXTRA_TEXT, annList.get(position).getId().toString());
-                    startActivity(intent);
+                    if (mViewPager.getChildAt(1) != null)
+                        mViewPager.removeViewAt(1);
+                    ((FragmentAnnViewpager.ViewpagerAdapter) mViewPager.getAdapter()).setValue(2, annList.get(position).getId());
+                    ((FragmentAnnViewpager.ViewpagerAdapter) mViewPager.getAdapter()).notifyDataSetChanged();
+                    mViewPager.setCurrentItem(1);
                 }
             }
         });
+
 
         fab.attachToListView(mListView, new ScrollDirectionListener() {
             @Override
@@ -409,6 +417,7 @@ public class FragmentAnn extends Fragment {
                 if (info.getIsSearching()) {
                     info.reset();
                     info.searchReset();
+                    mListView.addFooterView(loadingFooter);
                     mDialog.show();
                     refreshAnn(info, true);
                     fab.setColorNormalResId(R.color.colorPrimary);
@@ -472,7 +481,7 @@ public class FragmentAnn extends Fragment {
 
 
     public void refreshAnn(SearchInfo info, final boolean refresh) {
-        if (annList.size() <=1 || info.start==0 || annList.get(annList.size() - 1).getId() != -1) {
+        if (annList.size() <= 1 || info.start == 0 || annList.get(annList.size() - 1).getId() != -1) {
             String uri = "http://twcl.ck.tp.edu.tw/api/announce?" + info.getInfo();
             Log.d("Refresh", uri);
             final RequestQueue queue = Volley.newRequestQueue(getActivity());
@@ -492,6 +501,7 @@ public class FragmentAnn extends Fragment {
                                 }
                                 if (jArray.length() < 12) {
                                     annList.add(new Announcement(getResources().getString(R.string.nothing), "", "", -1));
+                                    mListView.removeFooterView(loadingFooter);
                                 }
                                 announcementAdapter.notifyDataSetChanged();
                                 mDialog.dismiss();
@@ -508,8 +518,7 @@ public class FragmentAnn extends Fragment {
                 }
             });
             queue.add(jsonObjectRequest);
-        }
-        else mDialog.dismiss();
+        } else mDialog.dismiss();
     }
 
     public static int dp2px(Context context, float dpValue) {

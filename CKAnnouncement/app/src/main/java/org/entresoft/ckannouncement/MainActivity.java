@@ -1,11 +1,11 @@
 package org.entresoft.ckannouncement;
 
 import android.os.Handler;
+import android.support.v4.view.ViewPager;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.support.v4.widget.DrawerLayout;
@@ -23,21 +23,28 @@ public class MainActivity extends ActionBarActivity
 
     @Override
     public void onBackPressed() {
-        if (doubleBackToExitPressedOnce) {
-            super.onBackPressed();
-            return;
-        }
 
-        this.doubleBackToExitPressedOnce = true;
-        Toast.makeText(this, R.string.double_click_to_exit, Toast.LENGTH_SHORT).show();
-
-        new Handler().postDelayed(new Runnable() {
-
-            @Override
-            public void run() {
-                doubleBackToExitPressedOnce = false;
+        final ViewPager mViewPager = (ViewPager) findViewById(R.id.vpPager);
+        FragmentAnnViewpager.ViewpagerAdapter sa = (FragmentAnnViewpager.ViewpagerAdapter) mViewPager.getAdapter();
+        if (mViewPager.getCurrentItem() == 0) {
+            if (doubleBackToExitPressedOnce) {
+                super.onBackPressed();
+                return;
             }
-        }, 2000);
+
+            this.doubleBackToExitPressedOnce = true;
+            Toast.makeText(this, R.string.double_click_to_exit, Toast.LENGTH_SHORT).show();
+
+            new Handler().postDelayed(new Runnable() {
+
+                @Override
+                public void run() {
+                    doubleBackToExitPressedOnce = false;
+                }
+            }, 2000);
+        } else {
+            mViewPager.setCurrentItem(0);
+        }
     }
 
     @Override
@@ -62,12 +69,12 @@ public class MainActivity extends ActionBarActivity
                 objFragment = fragmentManager.findFragmentByTag("FragmentMain");
                 if (objFragment == null)
                     objFragment = new FragmentMain();
-                fragmentManager.beginTransaction().replace(R.id.container, objFragment,"FragmentMain").commit();
+                fragmentManager.beginTransaction().replace(R.id.container, objFragment, "FragmentMain").commit();
                 break;
             case 1:
                 objFragment = fragmentManager.findFragmentByTag("FragmentAnn");
                 if (objFragment == null)
-                    objFragment = new FragmentAnn();
+                    objFragment = new FragmentAnnViewpager();
                 fragmentManager.beginTransaction().replace(R.id.container, objFragment, "FragmentAnn").commit();
                 break;
             case 2:

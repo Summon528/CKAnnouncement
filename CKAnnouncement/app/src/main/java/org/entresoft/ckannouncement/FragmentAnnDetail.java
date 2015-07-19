@@ -1,12 +1,13 @@
 package org.entresoft.ckannouncement;
 
+
 import android.content.Intent;
-import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuItem;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.android.volley.RequestQueue;
@@ -19,19 +20,36 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 
-public class AnnDetailActivity extends ActionBarActivity {
-    private static final String LOG_TAG = AnnDetailActivity.class.getSimpleName();
+/**
+ * A simple {@link Fragment} subclass.
+ */
+public class FragmentAnnDetail extends Fragment {
+    private static final String LOG_TAG = FragmentAnnDetail.class.getSimpleName();
+
+
+    public FragmentAnnDetail() {
+        // Required empty public constructor
+    }
+
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_ann_detail);
-        RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
-        final TextView annDetailView = (TextView) findViewById(R.id.annDetailView);
-        final TextView annDetailTitleView = (TextView) findViewById(R.id.annDetailTitleView);
-        final TextView annDetailLoading = (TextView) findViewById(R.id.annDetailLoading);
-        Intent intent = getIntent();
-        String url = "http://twcl.ck.tp.edu.tw/api/announce/" + intent.getStringExtra(Intent.EXTRA_TEXT);
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        // Inflate the layout for this fragment
+        return inflater.inflate(R.layout.fragment_ann_detail, container, false);
+    }
+
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+        RequestQueue queue = Volley.newRequestQueue(getActivity());
+        final TextView annDetailView = (TextView) getActivity().findViewById(R.id.annDetailView);
+        final TextView annDetailTitleView = (TextView) getActivity().findViewById(R.id.annDetailTitleView);
+        final TextView annDetailLoading = (TextView) getActivity().findViewById(R.id.annDetailLoading);
+        Bundle arguments = getArguments();
+        Integer id = arguments.getInt("id");
+        Log.d(LOG_TAG,id.toString());
+        String url = "http://twcl.ck.tp.edu.tw/api/announce/" + id.toString();
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(url, null,
                 new Response.Listener<JSONObject>() {
                     @Override
@@ -54,20 +72,5 @@ public class AnnDetailActivity extends ActionBarActivity {
             }
         });
         queue.add(jsonObjectRequest);
-    }
-
-    @Override
-        public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.menu_ann_detail, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        int id = item.getItemId();
-        if (id == R.id.action_settings) {
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
     }
 }
