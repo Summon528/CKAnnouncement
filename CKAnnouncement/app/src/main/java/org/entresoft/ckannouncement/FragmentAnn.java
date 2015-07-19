@@ -258,22 +258,20 @@ public class FragmentAnn extends Fragment {
     public void onSaveInstanceState(Bundle outState) {
         outState.putParcelableArrayList("annList", annList);
         outState.putParcelable("info", info);
-        int index = mListView.getFirstVisiblePosition();
-        View v = mListView.getChildAt(0);
-        int top = (v == null) ? 0 : (v.getTop() - mListView.getPaddingTop());
-        outState.putInt("index", index);
-        outState.putInt("top", top);
+        outState.putInt("lastId",lastId);
         super.onSaveInstanceState(outState);
     }
 
     @Override
     public void onResume() {
+        Log.d("Hello","resume");
         super.onResume();
     }
 
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        Log.d("Hello","createview");
         setHasOptionsMenu(true);
         return initView(inflater, container);
     }
@@ -308,9 +306,11 @@ public class FragmentAnn extends Fragment {
     SearchInfo info;
     ListView mListView;
     View loadingFooter;
+    Integer lastId=-1;
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
+        Log.d("Hello","activity");
         super.onActivityCreated(savedInstanceState);
         mListView = (ListView) getActivity().findViewById(R.id.annListView);
         loadingFooter = getActivity().getLayoutInflater().inflate(R.layout.loading_footer, null);
@@ -333,20 +333,34 @@ public class FragmentAnn extends Fragment {
         mPtr.setHeaderView(header);
         mPtr.addPtrUIHandler(header);
 
+        final ViewPager mViewPager = (ViewPager) getActivity().findViewById(R.id.vpPager);
 
         if (savedInstanceState == null) {
             mDialog.show();
             refreshAnn(info, true);
         } else {
             annList = savedInstanceState.getParcelableArrayList("annList");
+            lastId = savedInstanceState.getInt("lastId");
             announcementAdapter.clear();
             announcementAdapter.addAll(annList);
             announcementAdapter = new AnnouncementAdapter(getActivity(), R.layout.list_ann_item, annList);
             info = savedInstanceState.getParcelable("info");
             mListView.setAdapter(announcementAdapter);
-        }
 
-        final ViewPager mViewPager = (ViewPager) getActivity().findViewById(R.id.vpPager);
+            if (info.getIsSearching()) {
+                fab.setColorNormalResId(android.R.color.holo_red_light);
+                fab.setColorPressedResId(android.R.color.holo_red_dark);
+                fab.setColorRippleResId(android.R.color.holo_red_dark);
+                fab.setImageResource(R.drawable.ic_clear);
+            }
+            if (lastId != -1 && ((FragmentAnnViewpager.ViewpagerAdapter)mViewPager.getAdapter()).getCount()==1) {
+                Log.d("LastId",lastId.toString());
+                ((FragmentAnnViewpager.ViewpagerAdapter) mViewPager.getAdapter()).setValue(2, lastId);
+                ( mViewPager.getAdapter()).notifyDataSetChanged();
+                mViewPager.setCurrentItem(1);
+            }
+
+        }
 
 
         mPtr.setPtrHandler(new PtrHandler() {
@@ -370,11 +384,13 @@ public class FragmentAnn extends Fragment {
         mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                Log.d("Hello","CLICK");
                 if (annList.get(position).getId() != -1) {
                     if (mViewPager.getChildAt(1) != null)
                         mViewPager.removeViewAt(1);
-                    ((FragmentAnnViewpager.ViewpagerAdapter) mViewPager.getAdapter()).setValue(2, annList.get(position).getId());
-                    ((FragmentAnnViewpager.ViewpagerAdapter) mViewPager.getAdapter()).notifyDataSetChanged();
+                    lastId = annList.get(position).getId();
+                    ((FragmentAnnViewpager.ViewpagerAdapter) mViewPager.getAdapter()).setValue(2, lastId);
+                    ( mViewPager.getAdapter()).notifyDataSetChanged();
                     mViewPager.setCurrentItem(1);
                 }
             }
@@ -481,6 +497,7 @@ public class FragmentAnn extends Fragment {
 
 
     public void refreshAnn(SearchInfo info, final boolean refresh) {
+        if (getActivity() == null) return;
         if (annList.size() <= 1 || info.start == 0 || annList.get(annList.size() - 1).getId() != -1) {
             String uri = "http://twcl.ck.tp.edu.tw/api/announce?" + info.getInfo();
             Log.d("Refresh", uri);

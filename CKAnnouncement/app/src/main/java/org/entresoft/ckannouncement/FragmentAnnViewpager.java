@@ -31,6 +31,7 @@ public class FragmentAnnViewpager extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
+        setHasOptionsMenu(true);
         View rootView = inflater.inflate(R.layout.fragment_ann_viewpager, container, false);
         mViewPager = (ViewPager) rootView.findViewById(R.id.vpPager);
         mPagerAdapter = new ViewpagerAdapter(getActivity(), getChildFragmentManager());
