@@ -33,7 +33,9 @@
                 android:textIsSelectable="true"
                 android:textColor="@color/colorPrimaryDark"
                 android:textSize="20sp"
-                android:textStyle="bold"/>
+                android:textStyle="bold"
+
+                android:lineSpacingMultiplier="1.2"/>
 
             <TextView
                 android:id="@+id/annDetailInfoView"
@@ -50,7 +52,8 @@
                 android:textColor="@android:color/black"
                 android:textSize="16sp"
                 android:textIsSelectable="true"
-                android:autoLink="all"/>
+                android:autoLink="all"
+                android:lineSpacingMultiplier="1.2"/>
 
 
 
