@@ -160,7 +160,7 @@ public class FragmentAnn extends Fragment {
         super.onActivityCreated(savedInstanceState);
         mListView = (ListView) getActivity().findViewById(R.id.annListView);
         loadingFooter = getActivity().getLayoutInflater().inflate(R.layout.loading_footer, null);
-        mListView.addFooterView(loadingFooter);
+        mListView.addFooterView(loadingFooter,null,false);
         announcementAdapter = new AnnouncementAdapter(getActivity(), R.layout.list_ann_item, annList);
         mListView.setAdapter(announcementAdapter);
         final FloatingActionButton fab = (FloatingActionButton) getActivity().findViewById(R.id.fab);
@@ -187,6 +187,8 @@ public class FragmentAnn extends Fragment {
         } else {
             annList = savedInstanceState.getParcelableArrayList("annList");
             lastId = savedInstanceState.getInt("lastId");
+            info.getMore();
+            refreshAnn(info,false);
             announcementAdapter.clear();
             announcementAdapter.addAll(annList);
             announcementAdapter = new AnnouncementAdapter(getActivity(), R.layout.list_ann_item, annList);
@@ -279,7 +281,7 @@ public class FragmentAnn extends Fragment {
                 if (info.getIsSearching()) {
                     info.reset();
                     info.searchReset();
-                    mListView.addFooterView(loadingFooter);
+                    mListView.addFooterView(loadingFooter,null,false);
                     mDialog.show();
                     refreshAnn(info, true);
                     fab.setColorNormalResId(R.color.colorPrimary);
