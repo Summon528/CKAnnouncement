@@ -25,8 +25,8 @@ public class MainActivity extends ActionBarActivity
     public void onBackPressed() {
 
         final ViewPager mViewPager = (ViewPager) findViewById(R.id.vpPager);
-        FragmentAnnViewpager.ViewpagerAdapter sa = (FragmentAnnViewpager.ViewpagerAdapter) mViewPager.getAdapter();
-        if (mViewPager.getCurrentItem() == 0) {
+
+        if (mViewPager == null || mViewPager.getCurrentItem() == 0) {
             if (doubleBackToExitPressedOnce) {
                 super.onBackPressed();
                 return;
@@ -43,8 +43,10 @@ public class MainActivity extends ActionBarActivity
                 }
             }, 2000);
         } else {
+            FragmentAnnViewpager.ViewpagerAdapter sa = (FragmentAnnViewpager.ViewpagerAdapter) mViewPager.getAdapter();
             mViewPager.setCurrentItem(0);
         }
+
     }
 
     @Override

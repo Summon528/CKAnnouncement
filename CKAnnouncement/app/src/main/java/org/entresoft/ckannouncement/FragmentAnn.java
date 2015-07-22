@@ -102,22 +102,26 @@ public class FragmentAnn extends Fragment {
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
+
+        if (mListView.getLastVisiblePosition() == annList.size())
+            outState.putBoolean("refresh", true);
+        else outState.putBoolean("refresh", false);
         outState.putParcelableArrayList("annList", annList);
         outState.putParcelable("info", info);
-        outState.putInt("lastId",lastId);
+        outState.putInt("lastId", lastId);
         super.onSaveInstanceState(outState);
     }
 
     @Override
     public void onResume() {
-        Log.d("Hello","resume");
+        Log.d("Hello", "resume");
         super.onResume();
     }
 
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        Log.d("Hello","createview");
+        Log.d("Hello", "createview");
         setHasOptionsMenu(true);
         return initView(inflater, container);
     }
@@ -152,15 +156,15 @@ public class FragmentAnn extends Fragment {
     SearchInfo info;
     ListView mListView;
     View loadingFooter;
-    Integer lastId=-1;
+    Integer lastId = -1;
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
-        Log.d("Hello","activity");
+        Log.d("Hello", "activity");
         super.onActivityCreated(savedInstanceState);
         mListView = (ListView) getActivity().findViewById(R.id.annListView);
         loadingFooter = getActivity().getLayoutInflater().inflate(R.layout.loading_footer, null);
-        mListView.addFooterView(loadingFooter,null,false);
+        mListView.addFooterView(loadingFooter, null, false);
         announcementAdapter = new AnnouncementAdapter(getActivity(), R.layout.list_ann_item, annList);
         mListView.setAdapter(announcementAdapter);
         final FloatingActionButton fab = (FloatingActionButton) getActivity().findViewById(R.id.fab);
@@ -183,12 +187,14 @@ public class FragmentAnn extends Fragment {
 
         if (savedInstanceState == null) {
             mDialog.show();
-            refreshAnn(info, true);
+            refreshAnn(true);
         } else {
             annList = savedInstanceState.getParcelableArrayList("annList");
             lastId = savedInstanceState.getInt("lastId");
-            info.getMore();
-            refreshAnn(info,false);
+            if (savedInstanceState.getBoolean("refresh")) {
+                info.getMore();
+                refreshAnn(false);
+            }
             announcementAdapter.clear();
             announcementAdapter.addAll(annList);
             announcementAdapter = new AnnouncementAdapter(getActivity(), R.layout.list_ann_item, annList);
@@ -201,10 +207,10 @@ public class FragmentAnn extends Fragment {
                 fab.setColorRippleResId(android.R.color.holo_red_dark);
                 fab.setImageResource(R.drawable.ic_clear);
             }
-            if (lastId != -1 && ((FragmentAnnViewpager.ViewpagerAdapter)mViewPager.getAdapter()).getCount()==1) {
-                Log.d("LastId",lastId.toString());
+            if (lastId != -1 && ((FragmentAnnViewpager.ViewpagerAdapter) mViewPager.getAdapter()).getCount() == 1) {
+                Log.d("LastId", lastId.toString());
                 ((FragmentAnnViewpager.ViewpagerAdapter) mViewPager.getAdapter()).setValue(2, lastId);
-                ( mViewPager.getAdapter()).notifyDataSetChanged();
+                (mViewPager.getAdapter()).notifyDataSetChanged();
                 mViewPager.setCurrentItem(1);
             }
 
@@ -218,7 +224,8 @@ public class FragmentAnn extends Fragment {
                     @Override
                     public void run() {
                         info.resetStart();
-                        refreshAnn(info, true);
+                        if (mListView.getFooterViewsCount()==0) mListView.addFooterView(loadingFooter);
+                        refreshAnn(true);
                         mPtr.refreshComplete();
                     }
                 }, 1800);
@@ -232,13 +239,13 @@ public class FragmentAnn extends Fragment {
         mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                Log.d("Hello","CLICK");
+                Log.d("Hello", "CLICK");
                 if (annList.get(position).getId() != -1) {
                     if (mViewPager.getChildAt(1) != null)
                         mViewPager.removeViewAt(1);
                     lastId = annList.get(position).getId();
                     ((FragmentAnnViewpager.ViewpagerAdapter) mViewPager.getAdapter()).setValue(2, lastId);
-                    ( mViewPager.getAdapter()).notifyDataSetChanged();
+                    (mViewPager.getAdapter()).notifyDataSetChanged();
                     mViewPager.setCurrentItem(1);
                 }
             }
@@ -262,7 +269,7 @@ public class FragmentAnn extends Fragment {
             public void onScrollStateChanged(AbsListView view, int scrollState) {
                 if (isLastRow && scrollState == AbsListView.OnScrollListener.SCROLL_STATE_IDLE) {
                     info.getMore();
-                    refreshAnn(info, false);
+                    refreshAnn(false);
                     isLastRow = false;
                 }
             }
@@ -281,9 +288,9 @@ public class FragmentAnn extends Fragment {
                 if (info.getIsSearching()) {
                     info.reset();
                     info.searchReset();
-                    mListView.addFooterView(loadingFooter,null,false);
+                    mListView.addFooterView(loadingFooter, null, false);
                     mDialog.show();
-                    refreshAnn(info, true);
+                    refreshAnn(true);
                     fab.setColorNormalResId(R.color.colorPrimary);
                     fab.setColorPressedResId(R.color.colorPrimaryDark);
                     fab.setColorRippleResId(R.color.colorPrimaryDark);
@@ -327,7 +334,7 @@ public class FragmentAnn extends Fragment {
                                     if (!(s.isEmpty() && groupSpinnerText.isEmpty() && unitSpinnerText.isEmpty() && timeSpinnerText.isEmpty())) {
                                         info.updateSearch(s, unitSpinnerText, groupSpinnerText, timeSpinnerText);
                                         mDialog.show();
-                                        refreshAnn(info, true);
+                                        refreshAnn(true);
                                         fab.setColorNormalResId(android.R.color.holo_red_light);
                                         fab.setColorPressedResId(android.R.color.holo_red_dark);
                                         fab.setColorRippleResId(android.R.color.holo_red_dark);
@@ -344,7 +351,7 @@ public class FragmentAnn extends Fragment {
     }
 
 
-    public void refreshAnn(SearchInfo info, final boolean refresh) {
+    public void refreshAnn(final boolean refresh) {
         if (getActivity() == null) return;
         if (annList.size() <= 1 || info.getStart() == 0 || annList.get(annList.size() - 1).getId() != -1) {
             String uri = "http://twcl.ck.tp.edu.tw/api/announce?" + info.getInfo();
@@ -379,6 +386,11 @@ public class FragmentAnn extends Fragment {
                 @Override
                 public void onErrorResponse(VolleyError error) {
                     mDialog.dismiss();
+                    if (annList.size() == 0) {
+                        annList.add(new Announcement(getResources().getString(R.string.loadfail_swipe), "", "", -1));
+                        announcementAdapter.notifyDataSetChanged();
+                        mListView.removeFooterView(loadingFooter);
+                    }
                     Toast.makeText(getActivity(), R.string.requestError, Toast.LENGTH_SHORT).show();
                 }
             });

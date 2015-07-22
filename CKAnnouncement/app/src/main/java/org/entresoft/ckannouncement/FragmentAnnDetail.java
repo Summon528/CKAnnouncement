@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.text.Layout;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -15,6 +16,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.ScrollView;
@@ -74,27 +76,50 @@ public class FragmentAnnDetail extends Fragment {
         sv.smoothScrollTo(0, 0);
         return rootView;
     }
+
     String openInBrowser;
+    TextView annDetailView;
+    TextView annDetailTitleView;
+    LinearLayout annDetailLoading;
+    TextView annDetailLoadingText;
+    TextView annDetailInfoView;
+    LinearLayout fileLayout;
+    Button retryButton;
+    RequestQueue queue;
+    Integer id;
+
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-
-        RequestQueue queue = Volley.newRequestQueue(getActivity());
-        final TextView annDetailView = (TextView) getActivity().findViewById(R.id.annDetailView);
-        final TextView annDetailTitleView = (TextView) getActivity().findViewById(R.id.annDetailTitleView);
-        final TextView annDetailLoading = (TextView) getActivity().findViewById(R.id.annDetailLoading);
-        final TextView annDetailInfoView = (TextView) getActivity().findViewById(R.id.annDetailInfoView);
-        final LinearLayout fileLayout = (LinearLayout) getActivity().findViewById(R.id.annDetailFileLayout);
+        queue = Volley.newRequestQueue(getActivity());
+        annDetailView = (TextView) getActivity().findViewById(R.id.annDetailView);
+        annDetailTitleView = (TextView) getActivity().findViewById(R.id.annDetailTitleView);
+        annDetailLoading = (LinearLayout) getActivity().findViewById(R.id.annDetailLoading);
+        annDetailLoadingText = (TextView) getActivity().findViewById(R.id.annDetailLoadingText);
+        annDetailInfoView = (TextView) getActivity().findViewById(R.id.annDetailInfoView);
+        fileLayout = (LinearLayout) getActivity().findViewById(R.id.annDetailFileLayout);
+        retryButton = (Button) getActivity().findViewById(R.id.retryButton);
+        retryButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                annDetailLoadingText.setText(R.string.loading);
+                retryButton.setVisibility(View.GONE);
+                refreshAnn();
+            }
+        });
         Bundle arguments = getArguments();
-        Integer id = arguments.getInt("id");
+        id = arguments.getInt("id");
+        refreshAnn();
         Log.d(LOG_TAG, id.toString());
+    }
+
+    public void refreshAnn() {
         String url = "http://twcl.ck.tp.edu.tw/api/announce/" + id.toString();
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(url, null,
                 new Response.Listener<JSONObject>() {
                     @Override
                     public void onResponse(JSONObject response) {
                         try {
-                            annDetailLoading.setVisibility(View.GONE);
                             JSONArray jArray = response.getJSONArray("atts");
                             if (jArray.length() != 0) fileLayout.setVisibility(View.VISIBLE);
                             for (int i = 0; i < jArray.length(); i++) {
@@ -115,36 +140,29 @@ public class FragmentAnnDetail extends Fragment {
                             }
 
                             String annContent = response.getString("content");
-                            openInBrowser = annContent.substring(annContent.lastIndexOf("(")+1, annContent.lastIndexOf(")"));
+                            openInBrowser = annContent.substring(annContent.lastIndexOf("(") + 1, annContent.lastIndexOf(")"));
                             annContent = annContent.substring(0, annContent.lastIndexOf("***"));
                             annContent = Pattern.compile(" *\r\n *([^ 123456789一二三四五六七八九十(１２３４５６７８９（])", Pattern.DOTALL).matcher(annContent).replaceAll("$1");
                             annContent = Pattern.compile("\\[★相關網址([123456789]+)：[^]]+[^(]+[(]([^)]+)[)]", Pattern.DOTALL).matcher(annContent).replaceAll("相關網址$1：$2");
                             String annTitle = response.getString("title");
                             String info = response.getString("author_group_name").replaceAll("\\s+", "") + "  " + response.getString("author_name").replaceAll("\\s+", "") +
                                     "\n發表：" + response.getString("created") + "\n更新：" + response.getString("updated");
+                            annDetailLoading.setVisibility(View.GONE);
                             annDetailInfoView.setText(info);
                             annDetailView.setText(annContent);
                             annDetailTitleView.setText(annTitle);
                         } catch (JSONException e) {
-                            Log.e(LOG_TAG, e.toString());
+                            annDetailLoadingText.setText(R.string.loadfail);
+                            retryButton.setVisibility(View.VISIBLE);
                         }
                     }
                 }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
-                annDetailView.setText("Request ERROR");
+                annDetailLoadingText.setText(R.string.loadfail);
+                retryButton.setVisibility(View.VISIBLE);
             }
         });
         queue.add(jsonObjectRequest);
-
-        /** listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-        @Override public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        Uri number = Uri.parse("http://twcl.ck.tp.edu.tw/file/" + filePathList.get(position) + "?download=1");
-        Intent callIntent = new Intent(Intent.ACTION_VIEW, number);
-        startActivity(callIntent);
-        }
-
-        });
-         **/
     }
 }
