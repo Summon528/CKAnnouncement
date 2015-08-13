@@ -1,9 +1,12 @@
 package org.entresoft.ckannouncement;
 
 
+import android.app.DownloadManager;
+import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.support.v4.app.Fragment;
 import android.text.Layout;
 import android.util.Log;
@@ -14,6 +17,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.webkit.MimeTypeMap;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -21,6 +25,7 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.ScrollView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
@@ -32,6 +37,8 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -119,6 +126,7 @@ public class FragmentAnnDetail extends Fragment {
                 new Response.Listener<JSONObject>() {
                     @Override
                     public void onResponse(JSONObject response) {
+                        if (getActivity() == null) return;
                         try {
                             JSONArray jArray = response.getJSONArray("atts");
                             if (jArray.length() != 0) fileLayout.setVisibility(View.VISIBLE);
@@ -132,9 +140,27 @@ public class FragmentAnnDetail extends Fragment {
                                 textView.setOnClickListener(new View.OnClickListener() {
                                     @Override
                                     public void onClick(View view) {
-                                        Uri uri = Uri.parse("http://twcl.ck.tp.edu.tw/file/" + path + "?download=1");
-                                        Intent callIntent = new Intent(Intent.ACTION_VIEW, uri);
-                                        startActivity(callIntent);
+                                        DownloadManager downloadManager = (DownloadManager) getActivity().getSystemService (Context.DOWNLOAD_SERVICE);
+                                        Uri uri = null;
+                                        try {
+                                            String encodedPath = URLEncoder.encode(path,"UTF-8");
+                                            uri = Uri.parse("http://twcl.ck.tp.edu.tw/file/"+encodedPath+"?download=1");
+                                        } catch (UnsupportedEncodingException e) {
+                                            e.printStackTrace();
+                                        }
+                                        Log.d("Uri", uri.toString());
+                                        String extension = MimeTypeMap.getFileExtensionFromUrl(uri.toString());
+                                        Log.d("Uri", extension);
+                                        String mimeType = "application/octet-stream";
+                                        if (extension!=null)
+                                            mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension);
+                                        DownloadManager.Request request=new DownloadManager.Request (uri);
+                                        request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED )
+                                                .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS+"/"+getString(R.string.app_name), path.substring(path.indexOf("/")))
+                                                .setMimeType(mimeType);
+                                        Toast.makeText(getActivity(), R.string.downloadStart, Toast.LENGTH_SHORT).show();
+                                        long downloadId = downloadManager.enqueue(request);
+
                                     }
                                 });
                             }
@@ -142,7 +168,10 @@ public class FragmentAnnDetail extends Fragment {
                             String annContent = response.getString("content");
                             openInBrowser = annContent.substring(annContent.lastIndexOf("(") + 1, annContent.lastIndexOf(")"));
                             annContent = annContent.substring(0, annContent.lastIndexOf("***"));
-                            annContent = Pattern.compile(" *\r\n *([^ 123456789一二三四五六七八九十(１２３４５６７８９（])", Pattern.DOTALL).matcher(annContent).replaceAll("$1");
+                            annContent = Pattern.compile(" *\r\n *([^\uF06C\u00a0 123456789一二三四五六七八九十(１２３４５６７８９（])", Pattern.DOTALL).matcher(annContent).replaceAll("$1");
+                            annContent = Pattern.compile("\r\n[123456789][.]|^1[.]", Pattern.DOTALL).matcher(annContent).replaceAll("$0 ");
+                            annContent = Pattern.compile("(\\(|（)(http|www)", Pattern.DOTALL).matcher(annContent).replaceAll("$1 $2");
+                            annContent = Pattern.compile("(.tw|.com|.tw//?|.com//?)(\\)|）)", Pattern.DOTALL).matcher(annContent).replaceAll("$1 $2");
                             annContent = Pattern.compile("\\[★相關網址([123456789]+)：[^]]+[^(]+[(]([^)]+)[)]", Pattern.DOTALL).matcher(annContent).replaceAll("相關網址$1：$2");
                             String annTitle = response.getString("title");
                             String info = response.getString("author_group_name").replaceAll("\\s+", "") + "  " + response.getString("author_name").replaceAll("\\s+", "") +

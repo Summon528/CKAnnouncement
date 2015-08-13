@@ -30,6 +30,7 @@ import android.widget.Toast;
 
 
 import com.afollestad.materialdialogs.MaterialDialog;
+import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
@@ -103,19 +104,30 @@ public class FragmentAnn extends Fragment {
     @Override
     public void onSaveInstanceState(Bundle outState) {
 
-        if (mListView.getLastVisiblePosition() == annList.size())
+        if (mListView.getLastVisiblePosition() == annList.size() && (annList.size()==0||annList.get(annList.size()-1).getId()!=-1))
             outState.putBoolean("refresh", true);
         else outState.putBoolean("refresh", false);
         outState.putParcelableArrayList("annList", annList);
         outState.putParcelable("info", info);
         outState.putInt("lastId", lastId);
+        outState.putInt("FVC", mListView.getFooterViewsCount());
         super.onSaveInstanceState(outState);
     }
 
+
     @Override
-    public void onResume() {
-        Log.d("Hello", "resume");
-        super.onResume();
+    public void onDestroy() {
+        if (queue != null) {
+            Log.d("GOGO", "GOGO");
+            queue.cancelAll(new RequestQueue.RequestFilter() {
+                @Override
+                public boolean apply(Request<?> request) {
+                    return true;
+                }
+            });
+        }
+        mDialog.dismiss();
+        super.onDestroy();
     }
 
     @Nullable
@@ -157,6 +169,7 @@ public class FragmentAnn extends Fragment {
     ListView mListView;
     View loadingFooter;
     Integer lastId = -1;
+    RequestQueue queue;
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
@@ -189,12 +202,9 @@ public class FragmentAnn extends Fragment {
             mDialog.show();
             refreshAnn(true);
         } else {
+
             annList = savedInstanceState.getParcelableArrayList("annList");
             lastId = savedInstanceState.getInt("lastId");
-            if (savedInstanceState.getBoolean("refresh")) {
-                info.getMore();
-                refreshAnn(false);
-            }
             announcementAdapter.clear();
             announcementAdapter.addAll(annList);
             announcementAdapter = new AnnouncementAdapter(getActivity(), R.layout.list_ann_item, annList);
@@ -207,13 +217,22 @@ public class FragmentAnn extends Fragment {
                 fab.setColorRippleResId(android.R.color.holo_red_dark);
                 fab.setImageResource(R.drawable.ic_clear);
             }
+
             if (lastId != -1 && ((FragmentAnnViewpager.ViewpagerAdapter) mViewPager.getAdapter()).getCount() == 1) {
                 Log.d("LastId", lastId.toString());
                 ((FragmentAnnViewpager.ViewpagerAdapter) mViewPager.getAdapter()).setValue(2, lastId);
                 (mViewPager.getAdapter()).notifyDataSetChanged();
                 mViewPager.setCurrentItem(1);
             }
-
+            if (info.getIsRequesting()) {
+                if (savedInstanceState.getBoolean("refresh"))
+                    refreshAnn(false);
+                else {
+                    mDialog.show();
+                    refreshAnn(true);
+                }
+            }
+            if (savedInstanceState.getInt("FVC") == 0) mListView.removeFooterView(loadingFooter);
         }
 
 
@@ -224,7 +243,8 @@ public class FragmentAnn extends Fragment {
                     @Override
                     public void run() {
                         info.resetStart();
-                        if (mListView.getFooterViewsCount()==0) mListView.addFooterView(loadingFooter);
+                        if (mListView.getFooterViewsCount() == 0)
+                            mListView.addFooterView(loadingFooter);
                         refreshAnn(true);
                         mPtr.refreshComplete();
                     }
@@ -320,6 +340,7 @@ public class FragmentAnn extends Fragment {
                     md.title(R.string.search)
                             .customView(linearLayoutMine, false)
                             .positiveText(android.R.string.yes)
+                            .negativeText(android.R.string.no)
                             .callback(new MaterialDialog.ButtonCallback() {
                                 @Override
                                 public void onPositive(MaterialDialog dialog) {
@@ -356,7 +377,8 @@ public class FragmentAnn extends Fragment {
         if (annList.size() <= 1 || info.getStart() == 0 || annList.get(annList.size() - 1).getId() != -1) {
             String uri = "http://twcl.ck.tp.edu.tw/api/announce?" + info.getInfo();
             Log.d("Refresh", uri);
-            final RequestQueue queue = Volley.newRequestQueue(getActivity());
+            queue = Volley.newRequestQueue(getActivity());
+            info.setIsRequesting(1);
             final JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(uri, null,
                     new Response.Listener<JSONObject>() {
                         @Override
@@ -371,15 +393,18 @@ public class FragmentAnn extends Fragment {
                                             jArray.getJSONObject(i).getString("created").substring(5, 10),
                                             jArray.getJSONObject(i).getInt("id")));
                                 }
+                                announcementAdapter.notifyDataSetChanged();
+                                mDialog.dismiss();
                                 if (jArray.length() < 12) {
+                                    if (!isAdded()) return;
                                     annList.add(new Announcement(getResources().getString(R.string.nothing), "", "", -1));
                                     mListView.removeFooterView(loadingFooter);
                                 }
-                                announcementAdapter.notifyDataSetChanged();
-                                mDialog.dismiss();
+                                info.setIsRequesting(0);
                             } catch (JSONException e) {
                                 mDialog.dismiss();
                                 Toast.makeText(getActivity(), R.string.requestError, Toast.LENGTH_SHORT).show();
+                                info.setIsRequesting(0);
                             }
                         }
                     }, new Response.ErrorListener() {
@@ -391,10 +416,12 @@ public class FragmentAnn extends Fragment {
                         announcementAdapter.notifyDataSetChanged();
                         mListView.removeFooterView(loadingFooter);
                     }
+                    info.setIsRequesting(0);
                     Toast.makeText(getActivity(), R.string.requestError, Toast.LENGTH_SHORT).show();
                 }
             });
             queue.add(jsonObjectRequest);
+
         } else mDialog.dismiss();
     }
 

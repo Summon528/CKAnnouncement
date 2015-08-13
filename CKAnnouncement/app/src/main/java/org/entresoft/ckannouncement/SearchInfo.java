@@ -9,7 +9,7 @@ import java.net.URLEncoder;
  * Created by CodyTseng on 2015/7/20.
  */
 public class SearchInfo implements Parcelable {
-    private Integer start, isSearchng;
+    private Integer start, isSearchng, isRequesting;
     private String unit, group, time, search;
 
     public int describeContents() {
@@ -23,6 +23,7 @@ public class SearchInfo implements Parcelable {
         out.writeString(time);
         out.writeString(search);
         out.writeInt(isSearchng);
+        out.writeInt(isRequesting);
     }
 
     public static final Parcelable.Creator<SearchInfo> CREATOR
@@ -43,6 +44,7 @@ public class SearchInfo implements Parcelable {
         time = in.readString();
         search = in.readString();
         isSearchng = in.readInt();
+        isRequesting=in.readInt();
     }
 
     public SearchInfo() {
@@ -52,6 +54,7 @@ public class SearchInfo implements Parcelable {
         unit = "";
         group = "";
         isSearchng = 0;
+        isRequesting = 0;
     }
 
     public Void reset() {
@@ -68,6 +71,13 @@ public class SearchInfo implements Parcelable {
         return null;
     }
 
+    public boolean getIsRequesting (){
+        return isRequesting==1;
+    }
+
+    public void setIsRequesting (int n) {
+        isRequesting = n;
+    }
     public Integer getStart(){
         return start;
     }
