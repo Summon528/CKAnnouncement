@@ -25,15 +25,17 @@
     <string name="downloadStart">開始下載...</string>
 
     <string name="search">搜尋</string>
-    <string name="action_openInBrowser">在瀏覽器開啟</string>
-    <string name="action_settings">Settings</string>
+    <string name="action_openInBrowser">開啟網頁版</string>
+    <string name="action_shareAnn">分享公告</string>
+    <string name="action_settings">設定(沒用)</string>
     <string name="title_activity_ann_detail">詳細公告</string>
     <string name="loading">載入中...</string>
     <string name="loadfail">載入失敗</string>
     <string name="loadfail_swipe">載入失敗，下拉重試</string>
     <string name="retry">再試一次...</string>
     <string name="hello_world">Hello world!</string>
-
+    <string name="plzWait">請等待公告載入完成</string>
 <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="title_activity_show_from_web">ShowFromWeb</string>
 </resources>

@@ -6,8 +6,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Parcel;
-import android.os.Parcelable;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.view.ViewPager;
@@ -43,7 +41,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.net.URLEncoder;
 import java.util.ArrayList;
 
 import in.srain.cube.views.ptr.PtrFrameLayout;
@@ -103,8 +100,7 @@ public class FragmentAnn extends Fragment {
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
-
-        if (mListView.getLastVisiblePosition() == annList.size() && (annList.size()==0||annList.get(annList.size()-1).getId()!=-1))
+        if (mListView.getLastVisiblePosition() == annList.size() && (annList.size() == 0 || annList.get(annList.size() - 1).getId() != -1))
             outState.putBoolean("refresh", true);
         else outState.putBoolean("refresh", false);
         outState.putParcelableArrayList("annList", annList);
@@ -118,7 +114,6 @@ public class FragmentAnn extends Fragment {
     @Override
     public void onDestroy() {
         if (queue != null) {
-            Log.d("GOGO", "GOGO");
             queue.cancelAll(new RequestQueue.RequestFilter() {
                 @Override
                 public boolean apply(Request<?> request) {
@@ -185,6 +180,8 @@ public class FragmentAnn extends Fragment {
         mDialog = new ProgressDialog(getActivity());
         mDialog.setIndeterminateDrawable(getActivity().getResources().getDrawable(R.drawable.suika_loading));
         mDialog.setMessage("少女祈禱中...");
+        mDialog.setCanceledOnTouchOutside(false);
+        mDialog.setCancelable(false);
         ((ActionBarActivity) getActivity()).getSupportActionBar().setTitle(R.string.title_section2);
         final PtrFrameLayout mPtr = (PtrFrameLayout) getActivity().findViewById(R.id.mPtr);
         final MaterialHeader header = new MaterialHeader(getActivity());
@@ -429,5 +426,6 @@ public class FragmentAnn extends Fragment {
         final float scale = context.getResources().getDisplayMetrics().density;
         return (int) (dpValue * scale + 0.5f);
     }
+
 }
 

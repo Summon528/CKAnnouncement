@@ -56,7 +56,7 @@ public class FragmentAnnDetail extends Fragment {
     }
 
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-        inflater.inflate(R.menu.menu_ann, menu);
+        inflater.inflate(R.menu.menu_ann_detail, menu);
         super.onCreateOptionsMenu(menu, inflater);
     }
 
@@ -68,6 +68,17 @@ public class FragmentAnnDetail extends Fragment {
             Intent callIntent = new Intent(Intent.ACTION_VIEW, uri);
             startActivity(callIntent);
             return true;
+        } else if (id == R.id.action_shareAnn) {
+            String shareString = annTitle + '\n' + "http://twcl.ck.tp.edu.tw/announce/" + getArguments().getInt("id");
+            if (annTitle == null) {
+                Toast.makeText(getActivity(), R.string.plzWait, Toast.LENGTH_SHORT).show();
+            } else {
+                Intent sendIntent = new Intent(Intent.ACTION_SEND);
+                sendIntent.setType("text/plain");
+                sendIntent.putExtra(Intent.EXTRA_TEXT, shareString);
+                startActivity(sendIntent);
+                return true;
+            }
         }
         return super.onOptionsItemSelected(item);
     }
@@ -94,6 +105,7 @@ public class FragmentAnnDetail extends Fragment {
     Button retryButton;
     RequestQueue queue;
     Integer id;
+    String annTitle;
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
@@ -120,6 +132,7 @@ public class FragmentAnnDetail extends Fragment {
         Log.d(LOG_TAG, id.toString());
     }
 
+
     public void refreshAnn() {
         String url = "http://twcl.ck.tp.edu.tw/api/announce/" + id.toString();
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(url, null,
@@ -134,17 +147,18 @@ public class FragmentAnnDetail extends Fragment {
                                 final TextView textView = new TextView(getActivity());
                                 final String path = jArray.getJSONObject(i).getString("path");
                                 textView.setText(jArray.getJSONObject(i).getString("filename"));
+                                textView.setClickable(true);
                                 textView.setMinHeight(150);
                                 textView.setGravity(Gravity.CENTER);
                                 fileLayout.addView(textView);
                                 textView.setOnClickListener(new View.OnClickListener() {
                                     @Override
                                     public void onClick(View view) {
-                                        DownloadManager downloadManager = (DownloadManager) getActivity().getSystemService (Context.DOWNLOAD_SERVICE);
+                                        DownloadManager downloadManager = (DownloadManager) getActivity().getSystemService(Context.DOWNLOAD_SERVICE);
                                         Uri uri = null;
                                         try {
-                                            String encodedPath = URLEncoder.encode(path,"UTF-8");
-                                            uri = Uri.parse("http://twcl.ck.tp.edu.tw/file/"+encodedPath+"?download=1");
+                                            String encodedPath = URLEncoder.encode(path, "UTF-8");
+                                            uri = Uri.parse("http://twcl.ck.tp.edu.tw/file/" + encodedPath + "?download=1");
                                         } catch (UnsupportedEncodingException e) {
                                             e.printStackTrace();
                                         }
@@ -152,11 +166,11 @@ public class FragmentAnnDetail extends Fragment {
                                         String extension = MimeTypeMap.getFileExtensionFromUrl(uri.toString());
                                         Log.d("Uri", extension);
                                         String mimeType = "application/octet-stream";
-                                        if (extension!=null)
+                                        if (extension != null)
                                             mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension);
-                                        DownloadManager.Request request=new DownloadManager.Request (uri);
-                                        request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED )
-                                                .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS+"/"+getString(R.string.app_name), path.substring(path.indexOf("/")))
+                                        DownloadManager.Request request = new DownloadManager.Request(uri);
+                                        request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+                                                .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS + "/" + getString(R.string.app_name), path.substring(path.indexOf("/")))
                                                 .setMimeType(mimeType);
                                         Toast.makeText(getActivity(), R.string.downloadStart, Toast.LENGTH_SHORT).show();
                                         long downloadId = downloadManager.enqueue(request);
@@ -168,12 +182,12 @@ public class FragmentAnnDetail extends Fragment {
                             String annContent = response.getString("content");
                             openInBrowser = annContent.substring(annContent.lastIndexOf("(") + 1, annContent.lastIndexOf(")"));
                             annContent = annContent.substring(0, annContent.lastIndexOf("***"));
-                            annContent = Pattern.compile(" *\r\n *([^\uF06C\u00a0 123456789一二三四五六七八九十(１２３４５６７８９（])", Pattern.DOTALL).matcher(annContent).replaceAll("$1");
-                            annContent = Pattern.compile("\r\n[123456789][.]|^1[.]", Pattern.DOTALL).matcher(annContent).replaceAll("$0 ");
+                           // annContent = Pattern.compile("[\uF06C  　]*\r\n[\uF06C  　]*([^\uF06C  　123456789abcdefg一二三四五六七八九十(１２３４５６７８９（★])", Pattern.DOTALL).matcher(annContent).replaceAll("$1");
+                            annContent = Pattern.compile("\r\n[\uF06C  　]*[123456789abcdefg][.]|^1[.]", Pattern.DOTALL).matcher(annContent).replaceAll("$0 ");
                             annContent = Pattern.compile("(\\(|（)(http|www)", Pattern.DOTALL).matcher(annContent).replaceAll("$1 $2");
-                            annContent = Pattern.compile("(.tw|.com|.tw//?|.com//?)(\\)|）)", Pattern.DOTALL).matcher(annContent).replaceAll("$1 $2");
+                            annContent = Pattern.compile("(.tw|.php|.aspx|.com|.tw//?|.aspx//?|.php//?|.com//?)(\\)|）)", Pattern.DOTALL).matcher(annContent).replaceAll("$1 $2");
                             annContent = Pattern.compile("\\[★相關網址([123456789]+)：[^]]+[^(]+[(]([^)]+)[)]", Pattern.DOTALL).matcher(annContent).replaceAll("相關網址$1：$2");
-                            String annTitle = response.getString("title");
+                            annTitle = response.getString("title");
                             String info = response.getString("author_group_name").replaceAll("\\s+", "") + "  " + response.getString("author_name").replaceAll("\\s+", "") +
                                     "\n發表：" + response.getString("created") + "\n更新：" + response.getString("updated");
                             annDetailLoading.setVisibility(View.GONE);

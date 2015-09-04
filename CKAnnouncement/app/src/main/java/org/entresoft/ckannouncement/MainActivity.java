@@ -6,6 +6,7 @@ import android.support.v7.app.ActionBarActivity;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.support.v4.widget.DrawerLayout;
@@ -23,7 +24,6 @@ public class MainActivity extends ActionBarActivity
 
     @Override
     public void onBackPressed() {
-
         final ViewPager mViewPager = (ViewPager) findViewById(R.id.vpPager);
 
         if (mViewPager == null || mViewPager.getCurrentItem() == 0) {
@@ -46,7 +46,6 @@ public class MainActivity extends ActionBarActivity
             FragmentAnnViewpager.ViewpagerAdapter sa = (FragmentAnnViewpager.ViewpagerAdapter) mViewPager.getAdapter();
             mViewPager.setCurrentItem(0);
         }
-
     }
 
     @Override
@@ -61,11 +60,11 @@ public class MainActivity extends ActionBarActivity
                 (DrawerLayout) findViewById(R.id.drawer_layout));
     }
 
+Fragment objFragment = null;
 
     @Override
     public void onNavigationDrawerItemSelected(int position) {
         FragmentManager fragmentManager = getSupportFragmentManager();
-        Fragment objFragment = null;
         switch (position) {
             case 0:
                 objFragment = fragmentManager.findFragmentByTag("FragmentMain");
