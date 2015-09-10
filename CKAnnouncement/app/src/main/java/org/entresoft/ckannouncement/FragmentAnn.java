@@ -164,11 +164,12 @@ public class FragmentAnn extends Fragment {
     ListView mListView;
     View loadingFooter;
     Integer lastId = -1;
-    RequestQueue queue;
+    RequestQueue  queue ;
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         Log.d("Hello", "activity");
+        queue = Volley.newRequestQueue(getActivity());
         super.onActivityCreated(savedInstanceState);
         mListView = (ListView) getActivity().findViewById(R.id.annListView);
         loadingFooter = getActivity().getLayoutInflater().inflate(R.layout.loading_footer, null);
@@ -277,7 +278,10 @@ public class FragmentAnn extends Fragment {
 
             @Override
             public void onScrollUp() {
-                fab.hide();
+                if (info.getIsSearching()) {
+                    fab.show();
+                }
+
             }
         }, new AbsListView.OnScrollListener() {
             boolean isLastRow = false;
@@ -374,7 +378,6 @@ public class FragmentAnn extends Fragment {
         if (annList.size() <= 1 || info.getStart() == 0 || annList.get(annList.size() - 1).getId() != -1) {
             String uri = "http://twcl.ck.tp.edu.tw/api/announce?" + info.getInfo();
             Log.d("Refresh", uri);
-            queue = Volley.newRequestQueue(getActivity());
             info.setIsRequesting(1);
             final JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(uri, null,
                     new Response.Listener<JSONObject>() {
@@ -408,17 +411,18 @@ public class FragmentAnn extends Fragment {
                 @Override
                 public void onErrorResponse(VolleyError error) {
                     mDialog.dismiss();
-                    if (annList.size() == 0) {
+                    if (annList.size() == 0 ) {
                         annList.add(new Announcement(getResources().getString(R.string.loadfail_swipe), "", "", -1));
                         announcementAdapter.notifyDataSetChanged();
                         mListView.removeFooterView(loadingFooter);
                     }
+                    if (annList.get(annList.size() - 1).getId() == -1)
+                        mListView.removeFooterView(loadingFooter);
                     info.setIsRequesting(0);
                     Toast.makeText(getActivity(), R.string.requestError, Toast.LENGTH_SHORT).show();
                 }
             });
             queue.add(jsonObjectRequest);
-
         } else mDialog.dismiss();
     }
 

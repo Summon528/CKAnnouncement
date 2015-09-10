@@ -64,10 +64,14 @@ public class FragmentAnnDetail extends Fragment {
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
         if (id == R.id.action_openInBrowser) {
-            Uri uri = Uri.parse(openInBrowser);
-            Intent callIntent = new Intent(Intent.ACTION_VIEW, uri);
-            startActivity(callIntent);
-            return true;
+            if (annTitle == null) {
+                Toast.makeText(getActivity(), R.string.plzWait, Toast.LENGTH_SHORT).show();
+            } else {
+                Uri uri = Uri.parse(openInBrowser);
+                Intent callIntent = new Intent(Intent.ACTION_VIEW, uri);
+                startActivity(callIntent);
+                return true;
+            }
         } else if (id == R.id.action_shareAnn) {
             String shareString = annTitle + '\n' + "http://twcl.ck.tp.edu.tw/announce/" + getArguments().getInt("id");
             if (annTitle == null) {
@@ -104,7 +108,7 @@ public class FragmentAnnDetail extends Fragment {
     LinearLayout fileLayout;
     Button retryButton;
     RequestQueue queue;
-    Integer id;
+    static Integer id;
     String annTitle;
 
     @Override
@@ -182,7 +186,7 @@ public class FragmentAnnDetail extends Fragment {
                             String annContent = response.getString("content");
                             openInBrowser = annContent.substring(annContent.lastIndexOf("(") + 1, annContent.lastIndexOf(")"));
                             annContent = annContent.substring(0, annContent.lastIndexOf("***"));
-                           // annContent = Pattern.compile("[\uF06C  　]*\r\n[\uF06C  　]*([^\uF06C  　123456789abcdefg一二三四五六七八九十(１２３４５６７８９（★])", Pattern.DOTALL).matcher(annContent).replaceAll("$1");
+                            // annContent = Pattern.compile("[\uF06C  　]*\r\n[\uF06C  　]*([^\uF06C  　123456789abcdefg一二三四五六七八九十(１２３４５６７８９（★])", Pattern.DOTALL).matcher(annContent).replaceAll("$1");
                             annContent = Pattern.compile("\r\n[\uF06C  　]*[123456789abcdefg][.]|^1[.]", Pattern.DOTALL).matcher(annContent).replaceAll("$0 ");
                             annContent = Pattern.compile("(\\(|（)(http|www)", Pattern.DOTALL).matcher(annContent).replaceAll("$1 $2");
                             annContent = Pattern.compile("(.tw|.php|.aspx|.com|.tw//?|.aspx//?|.php//?|.com//?)(\\)|）)", Pattern.DOTALL).matcher(annContent).replaceAll("$1 $2");
