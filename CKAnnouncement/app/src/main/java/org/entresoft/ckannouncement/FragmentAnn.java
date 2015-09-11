@@ -164,7 +164,8 @@ public class FragmentAnn extends Fragment {
     ListView mListView;
     View loadingFooter;
     Integer lastId = -1;
-    RequestQueue  queue ;
+    RequestQueue queue;
+    FloatingActionButton fab;
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
@@ -176,7 +177,7 @@ public class FragmentAnn extends Fragment {
         mListView.addFooterView(loadingFooter, null, false);
         announcementAdapter = new AnnouncementAdapter(getActivity(), R.layout.list_ann_item, annList);
         mListView.setAdapter(announcementAdapter);
-        final FloatingActionButton fab = (FloatingActionButton) getActivity().findViewById(R.id.fab);
+        fab = (FloatingActionButton) getActivity().findViewById(R.id.fab);
         info = new SearchInfo();
         mDialog = new ProgressDialog(getActivity());
         mDialog.setIndeterminateDrawable(getActivity().getResources().getDrawable(R.drawable.suika_loading));
@@ -210,10 +211,7 @@ public class FragmentAnn extends Fragment {
             mListView.setAdapter(announcementAdapter);
 
             if (info.getIsSearching()) {
-                fab.setColorNormalResId(android.R.color.holo_red_light);
-                fab.setColorPressedResId(android.R.color.holo_red_dark);
-                fab.setColorRippleResId(android.R.color.holo_red_dark);
-                fab.setImageResource(R.drawable.ic_clear);
+                changeFab();
             }
 
             if (lastId != -1 && ((FragmentAnnViewpager.ViewpagerAdapter) mViewPager.getAdapter()).getCount() == 1) {
@@ -237,6 +235,7 @@ public class FragmentAnn extends Fragment {
         mPtr.setPtrHandler(new PtrHandler() {
             @Override
             public void onRefreshBegin(PtrFrameLayout frame) {
+                mDialog.show();
                 frame.postDelayed(new Runnable() {
                     @Override
                     public void run() {
@@ -312,10 +311,7 @@ public class FragmentAnn extends Fragment {
                     mListView.addFooterView(loadingFooter, null, false);
                     mDialog.show();
                     refreshAnn(true);
-                    fab.setColorNormalResId(R.color.colorPrimary);
-                    fab.setColorPressedResId(R.color.colorPrimaryDark);
-                    fab.setColorRippleResId(R.color.colorPrimaryDark);
-                    fab.setImageResource(R.drawable.ic_action_search);
+                    changeFab();
                     mListView.setSelectionAfterHeaderView();
                 } else {
                     MaterialDialog.Builder md = new MaterialDialog.Builder(getActivity());
@@ -357,10 +353,7 @@ public class FragmentAnn extends Fragment {
                                         info.updateSearch(s, unitSpinnerText, groupSpinnerText, timeSpinnerText);
                                         mDialog.show();
                                         refreshAnn(true);
-                                        fab.setColorNormalResId(android.R.color.holo_red_light);
-                                        fab.setColorPressedResId(android.R.color.holo_red_dark);
-                                        fab.setColorRippleResId(android.R.color.holo_red_dark);
-                                        fab.setImageResource(R.drawable.ic_clear);
+                                        changeFab();
                                         mListView.setSelectionAfterHeaderView();
                                     }
                                 }
@@ -411,7 +404,8 @@ public class FragmentAnn extends Fragment {
                 @Override
                 public void onErrorResponse(VolleyError error) {
                     mDialog.dismiss();
-                    if (annList.size() == 0 ) {
+                    if (annList.size() == 0||refresh) {
+                        if (refresh) annList.clear();
                         annList.add(new Announcement(getResources().getString(R.string.loadfail_swipe), "", "", -1));
                         announcementAdapter.notifyDataSetChanged();
                         mListView.removeFooterView(loadingFooter);
@@ -424,6 +418,20 @@ public class FragmentAnn extends Fragment {
             });
             queue.add(jsonObjectRequest);
         } else mDialog.dismiss();
+    }
+
+    private void changeFab() {
+        if (info.getIsSearching()) {
+            fab.setColorNormalResId(android.R.color.holo_red_light);
+            fab.setColorPressedResId(android.R.color.holo_red_dark);
+            fab.setColorRippleResId(android.R.color.holo_red_dark);
+            fab.setImageResource(R.drawable.ic_clear);
+        } else {
+            fab.setColorNormalResId(R.color.colorPrimary);
+            fab.setColorPressedResId(R.color.colorPrimaryDark);
+            fab.setColorRippleResId(R.color.colorPrimaryDark);
+            fab.setImageResource(R.drawable.ic_action_search);
+        }
     }
 
     public static int dp2px(Context context, float dpValue) {

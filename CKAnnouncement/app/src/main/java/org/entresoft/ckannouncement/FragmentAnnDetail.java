@@ -4,7 +4,9 @@ package org.entresoft.ckannouncement;
 import android.app.DownloadManager;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.v4.app.Fragment;
@@ -146,14 +148,16 @@ public class FragmentAnnDetail extends Fragment {
                         if (getActivity() == null) return;
                         try {
                             JSONArray jArray = response.getJSONArray("atts");
-                            if (jArray.length() != 0) fileLayout.setVisibility(View.VISIBLE);
+                            if (jArray.length() != 0) getActivity().findViewById(R.id.fileTextView).setVisibility(View.VISIBLE);
                             for (int i = 0; i < jArray.length(); i++) {
-                                final TextView textView = new TextView(getActivity());
+                                final TextView textView = (TextView) View.inflate(getActivity(), R.layout.ann_attachment, null);
                                 final String path = jArray.getJSONObject(i).getString("path");
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP){
+                                    textView.setBackground(getResources().getDrawable(R.drawable.attachment_ripple));
+                                }else{
+                                    textView.setBackground(getResources().getDrawable(R.drawable.attachment));
+                                }
                                 textView.setText(jArray.getJSONObject(i).getString("filename"));
-                                textView.setClickable(true);
-                                textView.setMinHeight(150);
-                                textView.setGravity(Gravity.CENTER);
                                 fileLayout.addView(textView);
                                 textView.setOnClickListener(new View.OnClickListener() {
                                     @Override
