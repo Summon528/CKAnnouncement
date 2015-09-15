@@ -41,7 +41,9 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 
 import in.srain.cube.views.ptr.PtrFrameLayout;
 import in.srain.cube.views.ptr.PtrHandler;
@@ -73,9 +75,10 @@ public class FragmentAnn extends Fragment {
                 row = inflater.inflate(layoutResourceId, parent, false);
 
                 holder = new ViewHolder();
-                holder.textView1 = (TextView) row.findViewById(R.id.list_ann_item_textview);
-                holder.textView2 = (TextView) row.findViewById(R.id.list_ann_item_date_textview);
-                holder.textView3 = (TextView) row.findViewById(R.id.list_ann_item_unit_textview);
+                holder.title = (TextView) row.findViewById(R.id.list_ann_item_textview);
+                holder.date = (TextView) row.findViewById(R.id.list_ann_item_date_textview);
+                holder.unit = (TextView) row.findViewById(R.id.list_ann_item_unit_textview);
+                holder.isNew = (TextView) row.findViewById(R.id.list_ann_item_isnew_textview);
 
                 row.setTag(holder);
             } else {
@@ -84,17 +87,23 @@ public class FragmentAnn extends Fragment {
 
             Announcement announcement = data.get(position);
 
-            holder.textView1.setText(announcement.getContent());
-            holder.textView2.setText(announcement.getDate());
-            holder.textView3.setText(announcement.getUnit());
-
+            holder.title.setText(announcement.getContent());
+            holder.date.setText(announcement.getDate().substring(5, 10));
+            holder.unit.setText(announcement.getUnit());
+            Calendar cal = Calendar.getInstance();
+            SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+            String formattedCal = format.format(cal.getTime());
+            if (formattedCal.equals(announcement.getDate().substring(0,10)))
+                holder.isNew.setVisibility(View.VISIBLE);
+            else holder.isNew.setVisibility(View.INVISIBLE);
             return row;
         }
 
         class ViewHolder {
-            TextView textView1;
-            TextView textView2;
-            TextView textView3;
+            TextView title;
+            TextView date;
+            TextView unit;
+            TextView isNew;
         }
     }
 
@@ -383,7 +392,7 @@ public class FragmentAnn extends Fragment {
                                 for (int i = 0; i < jArray.length(); i++) {
                                     annList.add(new Announcement(jArray.getJSONObject(i).getString("title"),
                                             jArray.getJSONObject(i).getString("author_group_name").replaceAll("\\s+", ""),
-                                            jArray.getJSONObject(i).getString("created").substring(5, 10),
+                                            jArray.getJSONObject(i).getString("created"),
                                             jArray.getJSONObject(i).getInt("id")));
                                 }
                                 announcementAdapter.notifyDataSetChanged();

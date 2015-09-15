@@ -1,5 +1,7 @@
 package org.entresoft.ckannouncement;
 
+import android.app.Activity;
+import android.content.Intent;
 import android.os.Handler;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.ActionBarActivity;
@@ -99,6 +101,10 @@ Fragment objFragment = null;
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
+        if (id == R.id.action_about){
+            Intent intent = new Intent(this, AboutActivity.class);
+            startActivity(intent);
+        }
         if (id == R.id.action_settings) {
             return true;
         }
