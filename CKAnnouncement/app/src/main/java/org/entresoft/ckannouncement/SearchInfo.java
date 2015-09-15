@@ -109,7 +109,7 @@ public class SearchInfo implements Parcelable {
     public String getInfo() {
         try {
             return "start=" + start.toString() + "&search=" + URLEncoder.encode(search, "UTF-8") + "&group=" + URLEncoder.encode(group, "UTF-8") +
-                    "&author=" + URLEncoder.encode(unit, "UTF-8") + "&time=" + time.toString();
+                    "&author=" + URLEncoder.encode(unit, "UTF-8") + "&hours=" + time.toString();
         } catch (Exception e) {
             return null;
         }
