@@ -1,6 +1,6 @@
 <resources>
     <string name="app_name">建中公告</string>
-    <string name="version">0.150915beta</string>
+    <string name="version">0.150918beta</string>
 
     <string name="title_section1">首頁</string>
     <string name="title_section2">公告</string>
@@ -38,11 +38,19 @@
     <string name="plzWait">請等待公告載入完成</string>
     <string name="attach_list">▼　附件列表　▼</string>
     <string name="about_app_name">建中公告 (School CMS)</string>
+    <string name="whats_new">這次更新了什麼？</string>
     <string name="about_app">公告從「Ann公告系統」讀取後自動同步。
 因為該系統沒有排版功能，公告可能會：\n
     1.在奇怪的地方換行。\n
     2.超連結包含奇怪的文字。(請手動去除多餘的字元)\n
     本系統更新頻率為一小時一次，如有需要可以參考「原系統公告連結」。\n</string>
+    <string name="update_log">\t1. 修復搜尋功能\n
+        \t2. 現在搜尋時會預設搜尋一個月內的內容\n
+        \t3. 現在可以在搜尋後修改搜尋條件\n
+        \t4. 增加版本資訊對話框\n
+        \t5. 修改按鈕顏色\n
+        \t6. 搜尋時自動跳出鍵盤
+    </string>
 <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="title_activity_show_from_web">ShowFromWeb</string>

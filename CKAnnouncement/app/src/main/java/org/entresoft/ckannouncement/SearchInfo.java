@@ -101,6 +101,10 @@ public class SearchInfo implements Parcelable {
         return isSearchng == 1;
     }
 
+    public String getUint(){return unit;}
+    public String getGroup(){return group;}
+    public String getTime(){return time;}
+    public String getSearch(){return search;}
     public Void getMore() {
         start += 12;
         return null;

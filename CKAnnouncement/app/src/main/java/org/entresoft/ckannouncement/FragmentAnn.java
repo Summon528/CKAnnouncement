@@ -1,6 +1,7 @@
 package org.entresoft.ckannouncement;
 
 import android.app.Activity;
+import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
@@ -17,9 +18,12 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.Spinner;
@@ -87,15 +91,21 @@ public class FragmentAnn extends Fragment {
 
             Announcement announcement = data.get(position);
 
+
             holder.title.setText(announcement.getContent());
-            holder.date.setText(announcement.getDate().substring(5, 10));
             holder.unit.setText(announcement.getUnit());
-            Calendar cal = Calendar.getInstance();
-            SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
-            String formattedCal = format.format(cal.getTime());
-            if (formattedCal.equals(announcement.getDate().substring(0,10)))
-                holder.isNew.setVisibility(View.VISIBLE);
-            else holder.isNew.setVisibility(View.INVISIBLE);
+            if (announcement.getDate().length() != 0) {
+                holder.date.setText(announcement.getDate().substring(5, 10));
+                Calendar cal = Calendar.getInstance();
+                SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+                String formattedCal = format.format(cal.getTime());
+                if (formattedCal.equals(announcement.getDate().substring(0, 10)))
+                    holder.isNew.setVisibility(View.VISIBLE);
+                else holder.isNew.setVisibility(View.INVISIBLE);
+            } else {
+                holder.isNew.setVisibility(View.INVISIBLE);
+                holder.date.setText("");
+            }
             return row;
         }
 
@@ -174,7 +184,7 @@ public class FragmentAnn extends Fragment {
     View loadingFooter;
     Integer lastId = -1;
     RequestQueue queue;
-    FloatingActionButton fab;
+    FloatingActionButton fab, fab2;
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
@@ -187,6 +197,7 @@ public class FragmentAnn extends Fragment {
         announcementAdapter = new AnnouncementAdapter(getActivity(), R.layout.list_ann_item, annList);
         mListView.setAdapter(announcementAdapter);
         fab = (FloatingActionButton) getActivity().findViewById(R.id.fab);
+        fab2 = (FloatingActionButton) getActivity().findViewById(R.id.fab2);
         info = new SearchInfo();
         mDialog = new ProgressDialog(getActivity());
         mDialog.setIndeterminateDrawable(getActivity().getResources().getDrawable(R.drawable.suika_loading));
@@ -205,7 +216,6 @@ public class FragmentAnn extends Fragment {
         mPtr.addPtrUIHandler(header);
 
         final ViewPager mViewPager = (ViewPager) getActivity().findViewById(R.id.vpPager);
-
         if (savedInstanceState == null) {
             mDialog.show();
             refreshAnn(true);
@@ -220,7 +230,7 @@ public class FragmentAnn extends Fragment {
             mListView.setAdapter(announcementAdapter);
 
             if (info.getIsSearching()) {
-                changeFab();
+                fab2.setVisibility(View.VISIBLE);
             }
 
             if (lastId != -1 && ((FragmentAnnViewpager.ViewpagerAdapter) mViewPager.getAdapter()).getCount() == 1) {
@@ -281,15 +291,12 @@ public class FragmentAnn extends Fragment {
         fab.attachToListView(mListView, new ScrollDirectionListener() {
             @Override
             public void onScrollDown() {
-                fab.show();
+                fab2.show();
             }
 
             @Override
             public void onScrollUp() {
-                if (info.getIsSearching()) {
-                    fab.show();
-                }
-
+                fab2.hide();
             }
         }, new AbsListView.OnScrollListener() {
             boolean isLastRow = false;
@@ -311,67 +318,94 @@ public class FragmentAnn extends Fragment {
             }
         });
 
-        getActivity().findViewById(R.id.fab).setOnClickListener(new View.OnClickListener() {
+        fab2.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (info.getIsSearching()) {
-                    info.reset();
-                    info.searchReset();
-                    mListView.addFooterView(loadingFooter, null, false);
-                    mDialog.show();
-                    refreshAnn(true);
-                    changeFab();
-                    mListView.setSelectionAfterHeaderView();
-                } else {
-                    MaterialDialog.Builder md = new MaterialDialog.Builder(getActivity());
-                    LayoutInflater factory = LayoutInflater.from(getActivity());
-                    final View stdView = factory.inflate(R.layout.dialog_search, null);
-                    final LinearLayout linearLayoutMine = (LinearLayout) stdView.findViewById(R.id.search_linearLayout);
-                    final Spinner groupSpinner = (Spinner) linearLayoutMine.findViewById(R.id.group_spinner);
-                    final Spinner unitSpinner = (Spinner) linearLayoutMine.findViewById(R.id.unit_spinner);
-                    final Spinner timeSpinner = (Spinner) linearLayoutMine.findViewById(R.id.time_spinner);
-                    ArrayAdapter<CharSequence> groupAdapter = ArrayAdapter.createFromResource(getActivity(),
-                            R.array.group_array, android.R.layout.simple_spinner_item);
-                    ArrayAdapter<CharSequence> unitAdapter = ArrayAdapter.createFromResource(getActivity(),
-                            R.array.unit_array, android.R.layout.simple_spinner_item);
-                    ArrayAdapter<CharSequence> timeAdapter = ArrayAdapter.createFromResource(getActivity(),
-                            R.array.time_array, android.R.layout.simple_spinner_item);
-                    groupAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-                    unitAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-                    timeAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-                    groupSpinner.setAdapter(groupAdapter);
-                    unitSpinner.setAdapter(unitAdapter);
-                    timeSpinner.setAdapter(timeAdapter);
-                    final TextView searchTextView = (TextView) linearLayoutMine.findViewById(R.id.search_text);
-                    md.title(R.string.search)
-                            .customView(linearLayoutMine, false)
-                            .positiveText(android.R.string.yes)
-                            .negativeText(android.R.string.no)
-                            .callback(new MaterialDialog.ButtonCallback() {
-                                @Override
-                                public void onPositive(MaterialDialog dialog) {
-                                    String s = searchTextView.getText().toString();
-                                    String time[] = {"", "1", "24", "168", "720", "8760"};
-                                    String groupSpinnerText = "", unitSpinnerText = "", timeSpinnerText = "";
-                                    if (groupSpinner.getSelectedItemPosition() != 0)
-                                        groupSpinnerText = groupSpinner.getSelectedItem().toString();
-                                    if (unitSpinner.getSelectedItemPosition() != 0)
-                                        unitSpinnerText = unitSpinner.getSelectedItem().toString();
-                                    timeSpinnerText = time[timeSpinner.getSelectedItemPosition()];
-                                    if (!(s.isEmpty() && groupSpinnerText.isEmpty() && unitSpinnerText.isEmpty() && timeSpinnerText.isEmpty())) {
-                                        info.updateSearch(s, unitSpinnerText, groupSpinnerText, timeSpinnerText);
-                                        mDialog.show();
-                                        refreshAnn(true);
-                                        changeFab();
-                                        mListView.setSelectionAfterHeaderView();
-                                    }
-                                }
-                            })
-                            .build()
-                            .show();
-                }
+                info.reset();
+                info.searchReset();
+                mListView.addFooterView(loadingFooter, null, false);
+                mDialog.show();
+                refreshAnn(true);
+                fab2.setVisibility(View.GONE);
+                mListView.setSelectionAfterHeaderView();
             }
         });
+
+        fab.setOnClickListener(
+                new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        final String time[] = {"0", "1", "24", "168", "720", "8760"};
+                        MaterialDialog.Builder md = new MaterialDialog.Builder(getActivity());
+                        LayoutInflater factory = LayoutInflater.from(getActivity());
+                        final View stdView = factory.inflate(R.layout.dialog_search, null);
+                        final LinearLayout linearLayoutMine = (LinearLayout) stdView.findViewById(R.id.search_linearLayout);
+                        final Spinner groupSpinner = (Spinner) linearLayoutMine.findViewById(R.id.group_spinner);
+                        final Spinner unitSpinner = (Spinner) linearLayoutMine.findViewById(R.id.unit_spinner);
+                        final Spinner timeSpinner = (Spinner) linearLayoutMine.findViewById(R.id.time_spinner);
+                        ArrayAdapter<CharSequence> groupAdapter = ArrayAdapter.createFromResource(getActivity(),
+                                R.array.group_array, android.R.layout.simple_spinner_item);
+                        ArrayAdapter<CharSequence> unitAdapter = ArrayAdapter.createFromResource(getActivity(),
+                                R.array.unit_array, android.R.layout.simple_spinner_item);
+                        ArrayAdapter<CharSequence> timeAdapter = ArrayAdapter.createFromResource(getActivity(),
+                                R.array.time_array, android.R.layout.simple_spinner_item);
+                        groupAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                        unitAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                        timeAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                        groupSpinner.setAdapter(groupAdapter);
+                        unitSpinner.setAdapter(unitAdapter);
+                        timeSpinner.setAdapter(timeAdapter);
+                        final EditText searchText = (EditText) linearLayoutMine.findViewById(R.id.search_text);
+                        searchText.setText(info.getSearch());
+                        searchText.setSelection(info.getSearch().length());
+                        String temp = info.getUint();
+                        int spinnerPosition = unitAdapter.getPosition(temp);
+                        unitSpinner.setSelection(spinnerPosition);
+                        temp = info.getGroup();
+                        spinnerPosition = groupAdapter.getPosition(temp);
+                        groupSpinner.setSelection(spinnerPosition);
+                        temp = info.getTime();
+                        for (int i = 0; i < 6; i++) {
+                            if (temp.length() == 0) {
+                                timeSpinner.setSelection(4);
+                                break;
+                            }
+                            if (temp.equals(time[i])) {
+                                timeSpinner.setSelection(i);
+                                break;
+                            }
+                        }
+                        MaterialDialog searchDialog = md.title(R.string.search)
+                                .customView(linearLayoutMine, false)
+                                .positiveText(android.R.string.yes)
+                                .negativeText(android.R.string.no)
+                                .callback(new MaterialDialog.ButtonCallback() {
+                                    @Override
+                                    public void onPositive(MaterialDialog dialog) {
+                                        String s = searchText.getText().toString();
+                                        String groupSpinnerText = "", unitSpinnerText = "", timeSpinnerText = "";
+                                        if (groupSpinner.getSelectedItemPosition() != 0)
+                                            groupSpinnerText = groupSpinner.getSelectedItem().toString();
+                                        if (unitSpinner.getSelectedItemPosition() != 0)
+                                            unitSpinnerText = unitSpinner.getSelectedItem().toString();
+                                        timeSpinnerText = time[timeSpinner.getSelectedItemPosition()];
+                                        if (!(s.isEmpty() && groupSpinnerText.isEmpty() && unitSpinnerText.isEmpty() && timeSpinnerText.isEmpty())) {
+                                            info.updateSearch(s, unitSpinnerText, groupSpinnerText, timeSpinnerText);
+                                            mDialog.show();
+                                            refreshAnn(true);
+                                            fab2.setVisibility(View.VISIBLE);
+                                            mListView.setSelectionAfterHeaderView();
+                                        }
+                                    }
+                                })
+                                .build();
+                        if (!info.getIsSearching())
+                            searchDialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
+                        searchDialog.show();
+                    }
+                }
+
+        );
     }
 
 
@@ -413,7 +447,7 @@ public class FragmentAnn extends Fragment {
                 @Override
                 public void onErrorResponse(VolleyError error) {
                     mDialog.dismiss();
-                    if (annList.size() == 0||refresh) {
+                    if (annList.size() == 0 || refresh) {
                         if (refresh) annList.clear();
                         annList.add(new Announcement(getResources().getString(R.string.loadfail_swipe), "", "", -1));
                         announcementAdapter.notifyDataSetChanged();
@@ -427,20 +461,6 @@ public class FragmentAnn extends Fragment {
             });
             queue.add(jsonObjectRequest);
         } else mDialog.dismiss();
-    }
-
-    private void changeFab() {
-        if (info.getIsSearching()) {
-            fab.setColorNormalResId(android.R.color.holo_red_light);
-            fab.setColorPressedResId(android.R.color.holo_red_dark);
-            fab.setColorRippleResId(android.R.color.holo_red_dark);
-            fab.setImageResource(R.drawable.ic_clear);
-        } else {
-            fab.setColorNormalResId(R.color.colorPrimary);
-            fab.setColorPressedResId(R.color.colorPrimaryDark);
-            fab.setColorRippleResId(R.color.colorPrimaryDark);
-            fab.setImageResource(R.drawable.ic_action_search);
-        }
     }
 
     public static int dp2px(Context context, float dpValue) {

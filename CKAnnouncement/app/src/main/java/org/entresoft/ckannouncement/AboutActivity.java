@@ -1,9 +1,13 @@
 package org.entresoft.ckannouncement;
 
+import android.app.Dialog;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+
+import com.afollestad.materialdialogs.MaterialDialog;
 
 public class AboutActivity extends ActionBarActivity {
 
@@ -33,5 +37,12 @@ public class AboutActivity extends ActionBarActivity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    public void whatsNew(View v){
+        new MaterialDialog.Builder(this)
+                .title(R.string.whats_new)
+                .content(R.string.update_log)
+                .show();
     }
 }
