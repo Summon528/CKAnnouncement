@@ -323,9 +323,10 @@ public class FragmentAnn extends Fragment {
             public void onClick(View v) {
                 info.reset();
                 info.searchReset();
-                mListView.addFooterView(loadingFooter, null, false);
                 mDialog.show();
                 refreshAnn(true);
+                if (mListView.getFooterViewsCount()==0)
+                    mListView.addFooterView(loadingFooter, null, false);
                 fab2.setVisibility(View.GONE);
                 mListView.setSelectionAfterHeaderView();
             }
@@ -389,13 +390,14 @@ public class FragmentAnn extends Fragment {
                                         if (unitSpinner.getSelectedItemPosition() != 0)
                                             unitSpinnerText = unitSpinner.getSelectedItem().toString();
                                         timeSpinnerText = time[timeSpinner.getSelectedItemPosition()];
-                                        if (!(s.isEmpty() && groupSpinnerText.isEmpty() && unitSpinnerText.isEmpty() && timeSpinnerText.isEmpty())) {
+                                        if (!(s.isEmpty() && groupSpinnerText.isEmpty() && unitSpinnerText.isEmpty())) {
                                             info.updateSearch(s, unitSpinnerText, groupSpinnerText, timeSpinnerText);
                                             mDialog.show();
                                             refreshAnn(true);
                                             fab2.setVisibility(View.VISIBLE);
                                             mListView.setSelectionAfterHeaderView();
                                         }
+                                        else  Toast.makeText(getActivity(), R.string.searchSomething, Toast.LENGTH_SHORT).show();
                                     }
                                 })
                                 .build();

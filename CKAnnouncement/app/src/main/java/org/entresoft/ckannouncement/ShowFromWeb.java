@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Environment;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
@@ -111,15 +112,17 @@ public class ShowFromWeb extends ActionBarActivity {
                     public void onResponse(JSONObject response) {
                         try {
                             JSONArray jArray = response.getJSONArray("atts");
-                            if (jArray.length() != 0) fileLayout.setVisibility(View.VISIBLE);
+                            if (jArray.length() != 0)
+                                findViewById(R.id.fileTextView).setVisibility(View.VISIBLE);
                             for (int i = 0; i < jArray.length(); i++) {
-                                final TextView textView = new TextView(getApplicationContext());
+                                final TextView textView = (TextView) View.inflate(getBaseContext(), R.layout.ann_attachment, null);
                                 final String path = jArray.getJSONObject(i).getString("path");
+                                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP){
+                                    textView.setBackground(getResources().getDrawable(R.drawable.attachment_ripple));
+                                }else{
+                                textView.setBackground(getResources().getDrawable(R.drawable.attachment));
+                                }
                                 textView.setText(jArray.getJSONObject(i).getString("filename"));
-                                textView.setClickable(true);
-                                textView.setMinHeight(150);
-                                textView.setGravity(Gravity.CENTER);
-                                textView.setTextColor(Color.GRAY);
                                 fileLayout.addView(textView);
                                 textView.setOnClickListener(new View.OnClickListener() {
                                     @Override
@@ -142,9 +145,8 @@ public class ShowFromWeb extends ActionBarActivity {
                                         request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
                                                 .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS + "/" + getString(R.string.app_name), path.substring(path.indexOf("/")))
                                                 .setMimeType(mimeType);
-                                        Toast.makeText(getApplicationContext(),R.string.downloadStart, Toast.LENGTH_SHORT).show();
-                                        long downloadId = downloadManager.enqueue(request);
-
+                                        Toast.makeText(getApplicationContext(), R.string.downloadStart, Toast.LENGTH_SHORT).show();
+                                        downloadManager.enqueue(request);
                                     }
                                 });
                             }

@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">建中公告</string>
-    <string name="version">0.150918beta</string>
-
+    <string name="version">0.151103beta</string>
+4d
     <string name="title_section1">首頁</string>
     <string name="title_section2">公告</string>
     <string name="title_section3">登入</string>
@@ -25,6 +25,7 @@
     <string name="downloadStart">開始下載...</string>
 
     <string name="search">搜尋</string>
+    <string name="searchSomething">輸入點東西， 不要搞笑</string>
     <string name="action_openInBrowser">開啟網頁版</string>
     <string name="action_shareAnn">分享公告</string>
     <string name="action_about">關於</string>
@@ -44,12 +45,11 @@
     1.在奇怪的地方換行。\n
     2.超連結包含奇怪的文字。(請手動去除多餘的字元)\n
     本系統更新頻率為一小時一次，如有需要可以參考「原系統公告連結」。\n</string>
-    <string name="update_log">\t1. 修復搜尋功能\n
-        \t2. 現在搜尋時會預設搜尋一個月內的內容\n
-        \t3. 現在可以在搜尋後修改搜尋條件\n
-        \t4. 增加版本資訊對話框\n
-        \t5. 修改按鈕顏色\n
-        \t6. 搜尋時自動跳出鍵盤
+    <string name="update_log">\t1016版\n\t1. 移除最下方小空隙\n
+        \t2. 修正由網頁開啟UI的BUG\n
+        \t1103版\n
+        \t1. 修復有時發生的FOOTER BUG\n
+        \t2. 搜尋框全部空白或只填時間時提示現錯誤訊息
     </string>
 <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
